@@ -49,3 +49,4 @@ Visual Studio 2022 Professional
 
 ## Links
 [Home Page](http://www.chizl.com/)
+[License](https://github.com/gavin1970/Chizl.TextConverter/blob/master/LICENSE.md)
