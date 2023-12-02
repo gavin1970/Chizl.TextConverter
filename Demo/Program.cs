@@ -99,8 +99,7 @@ void Validate(string fileName, FileType ft, List<ColumnDefinition> columns, int 
     FileLoad fileLoad = new(fileName, ft);
     fileLoad.ColumnDefinitions = columns;
 
-    bool success = fileLoad.Validate(out validationLog);
-    if (success)
+    if(fileLoad.Validate(out validationLog))
     {
         Console.WriteLine("Validation Success!");
         DisplayTable(fileLoad, maxRecordsToDisplay);
@@ -128,7 +127,8 @@ void DisplayLog(List<ValidationLog> validationLog, int maxRecordsToDisplay = 10,
         var locType = vl.ValidationType == ValidationTypes.LineImport ? "Line" : "Column";
         string msg = $"{vl.ValidationType} - {locType}#: {vl.Location} - {vl.Message}";
 
-        if (!errorsOnly || vl.MessageType == MessageTypes.Error) {
+        if (!errorsOnly || vl.MessageType == MessageTypes.Error) 
+        {
             Console.WriteLine(msg);
             if (maxRecordsToDisplay-- <= 0) { Console.ReadKey(); maxRecordsToDisplay = orgMaxRecToDisplay; }
         }

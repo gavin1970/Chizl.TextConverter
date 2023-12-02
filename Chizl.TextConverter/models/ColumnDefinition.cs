@@ -3,18 +3,6 @@ using System.Collections.Generic;
 
 namespace Chizl.TextConverter
 {
-    public static class EnumExtensions
-    {
-        public static int Value(this DataTypes val)
-        {
-            return (int)val;
-        }
-        public static string Name(this DataTypes val)
-        {
-            return Enum.GetName(typeof(DataTypes), val);
-        }
-    }
-
     public class ColumnDefinition
     {
         #region Constructors

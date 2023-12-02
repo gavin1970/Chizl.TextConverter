@@ -1,12 +1,21 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+		<PropertyGroup>
+				<TargetFrameworks>netstandard2.0;netstandard2.1;net47;net48;net6.0;net7.0</TargetFrameworks>
+		</PropertyGroup>
 
-  <ItemGroup>
-    <Folder Include="services\" />
-  </ItemGroup>
-
+		<PropertyGroup>
+				<Authors>Chizl</Authors>
+				<PackageId>Chizl.TextConverter</PackageId>
+				<Company>Chizl.com</Company>
+				<ImplicitUsings>disable</ImplicitUsings>
+				<Nullable>disable</Nullable>
+				<Copyright>© 2023 chizl.com</Copyright>
+				<PackageTags>ascii;csv;fixed length columns;tab-delimited;semicolon-delimited</PackageTags>
+				<FileVersion>3.12.02.02</FileVersion>
+				<AssemblyVersion>3.12.0.0</AssemblyVersion>
+				<Version>3.12.02.0</Version>
+				<EnforceCodeStyleInBuild>False</EnforceCodeStyleInBuild>
+				<PackageReadmeFile>README.md</PackageReadmeFile>
+		</PropertyGroup>
 </Project>
