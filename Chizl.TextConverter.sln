@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34221.43
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Chizl.TextConverter", "Chizl.TextConverter\Chizl.TextConverter.csproj", "{F1E5A04D-10B1-4904-A56D-CD61785036B5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo", "Demo\Demo.csproj", "{8D086E35-DBB2-4E9E-BF32-5AA6D4ABF347}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F1E5A04D-10B1-4904-A56D-CD61785036B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1E5A04D-10B1-4904-A56D-CD61785036B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1E5A04D-10B1-4904-A56D-CD61785036B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1E5A04D-10B1-4904-A56D-CD61785036B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D086E35-DBB2-4E9E-BF32-5AA6D4ABF347}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D086E35-DBB2-4E9E-BF32-5AA6D4ABF347}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D086E35-DBB2-4E9E-BF32-5AA6D4ABF347}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D086E35-DBB2-4E9E-BF32-5AA6D4ABF347}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2BBC3E73-09BF-4D90-BC1E-F5BCECA6A1D9}
+	EndGlobalSection
+EndGlobal
