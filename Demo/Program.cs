@@ -40,7 +40,7 @@ List<ColumnDefinition> TestFixLengthColumns()
         County Code (FIPS)                104-106           9(3)
         State Name                        107-132           X(26)
         County Name                       133-147           X(15)
-        County Transaction Date           148-155           9(8)   - This is supposed to be an Int32, however, as seen in file, it's empty. So have to make it a String.
+        County Transaction Date           148-155           9(8)   - This is supposed to be an int, however, as seen in file, it's empty. So have to make it a String.
         Limit Transaction Date            156-163           9(8)
         Median Price Determining Limit    164-170           9(7)
         Year For Median Determining Limit 171-175           9(4) 
@@ -48,24 +48,24 @@ List<ColumnDefinition> TestFixLengthColumns()
 
     return new()
     {
-        new ColumnDefinition("MSACode", DataTypes.Int32, 5),
-        new ColumnDefinition("MetroDivCode", DataTypes.Int32, 5),
+        new ColumnDefinition("MSACode", DataTypes.Int64, 5),
+        new ColumnDefinition("MetroDivCode", DataTypes.Int64, 5),
         new ColumnDefinition("MSAName", DataTypes.String, 50),
         new ColumnDefinition("SOACode", DataTypes.String, 5),
         new ColumnDefinition("LimitType", DataTypes.String, 1){ AllowedValues=new List<object> { "S", "H" } },
-        new ColumnDefinition("MedianPrice", DataTypes.Int32, 7),
-        new ColumnDefinition("LimitFor1LivUnit", DataTypes.Int32, 7),
-        new ColumnDefinition("LimitFor2LivUnits", DataTypes.Int32, 7),
-        new ColumnDefinition("LimitFor3LivUnits", DataTypes.Int32, 7),
-        new ColumnDefinition("LimitFor4LivUnits", DataTypes.Int32, 7),
+        new ColumnDefinition("MedianPrice", DataTypes.Int64, 7),
+        new ColumnDefinition("LimitFor1LivUnit", DataTypes.Int64, 7),
+        new ColumnDefinition("LimitFor2LivUnits", DataTypes.Int64, 7),
+        new ColumnDefinition("LimitFor3LivUnits", DataTypes.Int64, 7),
+        new ColumnDefinition("LimitFor4LivUnits", DataTypes.Int64, 7),
         new ColumnDefinition("StateAbbreviation", DataTypes.String, 2),
-        new ColumnDefinition("CountyCodeFIPS", DataTypes.Int32, 3),
+        new ColumnDefinition("CountyCodeFIPS", DataTypes.Int64, 3),
         new ColumnDefinition("StateName", DataTypes.String, 26),
         new ColumnDefinition("CountyName", DataTypes.String, 15),
-        new ColumnDefinition("CountyTransDate", DataTypes.Int32, 8) { AllowDBNull=true },  //int with possible empty value
-        new ColumnDefinition("LimitTransDate", DataTypes.Int32, 8),
-        new ColumnDefinition("MedPriceDetLimit", DataTypes.Int32, 7),
-        new ColumnDefinition("YearForMedDetLimit", DataTypes.Int32, 4)
+        new ColumnDefinition("CountyTransDate", DataTypes.Int64, 8) { AllowDBNull=true },  //int with possible empty value
+        new ColumnDefinition("LimitTransDate", DataTypes.Int64, 8),
+        new ColumnDefinition("MedPriceDetLimit", DataTypes.Int64, 7),
+        new ColumnDefinition("YearForMedDetLimit", DataTypes.Int64, 4)
     };
 }
 
@@ -83,7 +83,7 @@ List<ColumnDefinition> TestDelimited()
         new ColumnDefinition("Column3", DataTypes.DateTime),
         new ColumnDefinition("Column4", DataTypes.Decimal, decimalSize:2),
         new ColumnDefinition("Column5", DataTypes.Boolean),
-        new ColumnDefinition("Column6", DataTypes.Int32),
+        new ColumnDefinition("Column6", DataTypes.Int64),
         new ColumnDefinition("Column7", DataTypes.TimeSpan, 25),
         new ColumnDefinition("Column8", DataTypes.ByteArray, 35)
     };
@@ -96,10 +96,12 @@ void Validate(string fileName, FileType ft, List<ColumnDefinition> columns, int 
     DrawTitle($"Running test on: {fileName}");
 
     var validationLog = new List<ValidationLog>();
-    FileLoad fileLoad = new(fileName, ft);
-    fileLoad.ColumnDefinitions = columns;
+    FileLoad fileLoad = new(fileName, ft)
+    {
+        ColumnDefinitions = columns
+    };
 
-    if(fileLoad.Validate(out validationLog))
+    if (fileLoad.Validate(out validationLog))
     {
         Console.WriteLine("Validation Success!");
         DisplayTable(fileLoad, maxRecordsToDisplay);

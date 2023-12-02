@@ -58,16 +58,13 @@ namespace Chizl.TextConverter
 
     public enum DataTypes
     {
-        String = 0,
-        Int32,
-        Boolean,
-        TimeSpan,
+        Boolean = 0,
+        ByteArray,
         DateTime,
         Decimal,
-        ByteArray,
-    }
-
-    internal class Constants
-    {
+        Guid,
+        Int64,
+        String,
+        TimeSpan
     }
 }

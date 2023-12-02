@@ -4,17 +4,28 @@ using System.Data;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using System.Drawing;
-using System.Collections;
-using System.Data.Common;
 
 namespace Chizl.TextConverter
 {
+    /// TODO: Add more summaries to this class and it's methods/properties.
+    /// <summary>
+    /// Takes a text file and the file type and allows a caller to load all line data into a DataTable.<br/>
+    /// <br/>
+    /// <a href="https://github.com/gavin1970/Chizl.TextConverter/blob/master/Chizl.TextConverter/FileLoad.cs">View on Github</a>
+    /// </summary>
     public class FileLoad
     {
         private DataTable _dataTable = new DataTable();
         private readonly Regex _rgx = new Regex("[^a-zA-Z0-9 -]");
 
+        /// <summary>
+        /// Takes a text file and the file type and allows a caller to load all line data into a DataTable.<br/>
+        /// <br/>
+        /// <a href="https://github.com/gavin1970/Chizl.TextConverter/blob/master/Chizl.TextConverter/FileLoad.cs">View on Github</a>
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <param name="fileType"></param>
+        /// <exception cref="ArgumentException"></exception>
         public FileLoad(string filePath, FileType fileType)
         {
             if(string.IsNullOrWhiteSpace(filePath))
@@ -31,14 +42,24 @@ namespace Chizl.TextConverter
         public FileType InputFileType { get; }
         public List<ColumnDefinition> ColumnDefinitions { get; set; } = new List<ColumnDefinition>();
         public DataTable ToDataTable { get { return _dataTable; } }
-
         public bool TrimValues { get; set; } = false;
 
+        /// <summary>
+        /// Converts Internal DataTypes to real Types.
+        /// </summary>
+        /// <param name="dataType">Chizl.TextConverter DataType</param>
+        /// <returns></returns>
         private Type GetDataType(DataTypes dataType)
         {
             var dt = dataType == DataTypes.ByteArray ? "Byte[]" : dataType.Name();
             return Type.GetType($"System.{dt}");
         }
+        /// TODO: Move some of this code into smaller method.
+        /// <summary>
+        /// Loads and validates all data in file and stores them into a DataTable.
+        /// </summary>
+        /// <param name="validationLog">Will return with all information and errors that may occure.</param>
+        /// <returns>bool - success or error</returns>
         public bool Validate(out List<ValidationLog> validationLog)
         {
             bool retVal = false;
@@ -65,11 +86,14 @@ namespace Chizl.TextConverter
                     {
                         var dType = GetDataType(col.DataType);
 
-                        DataColumn dc = new DataColumn(col.Name, dType);
-                        dc.AllowDBNull = col.AllowDBNull;
+                        var dc = new DataColumn(col.Name, dType)
+                        {
+                            AllowDBNull = col.AllowDBNull
+                        };
 
                         if (col.Size > 0 && dType==typeof(String))
                             dc.MaxLength = col.Size;
+
                         _dataTable.Columns.Add(dc);
 
                         validationLog.Add(new ValidationLog(ValidationTypes.ColumnDefinition, (colLoc + 1), $"Added '{col.Name}' to table successfully.", MessageTypes.Information, ColumnDefinitions[colLoc]));
@@ -163,6 +187,13 @@ namespace Chizl.TextConverter
             return retVal; 
         }
 
+        /// <summary>
+        /// Validating against AllowedValues list passed in for DataColumn.
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="colDef"></param>
+        /// <param name="retMessage"></param>
+        /// <returns></returns>
         private bool HasValidData(object data, ColumnDefinition colDef, out string retMessage)
         {
             retMessage = string.Empty;
@@ -218,9 +249,15 @@ namespace Chizl.TextConverter
                             else
                                 retVal = false;
                             break;
-                        case DataTypes.Int32:
-                            if (Int32.TryParse(data, out Int32 iVal))
+                        case DataTypes.Int64:
+                            if (Int64.TryParse(data, out Int64 iVal))
                                 newValue = iVal;
+                            else
+                                retVal = false;
+                            break;
+                        case DataTypes.Guid:
+                            if (Guid.TryParse(data, out Guid gVal))
+                                newValue = gVal;
                             else
                                 retVal = false;
                             break;
@@ -278,7 +315,7 @@ namespace Chizl.TextConverter
                     retVal.Add("");
                 else
                 {
-                    string col = line.Substring(0, len);
+                    var col = line.Substring(0, len);
                     retVal.Add(col);
                     line = line.Substring(len);
                 }

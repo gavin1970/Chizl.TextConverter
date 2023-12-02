@@ -2,6 +2,11 @@
 
 namespace Chizl.TextConverter
 {
+    /// <summary>
+    /// Setup a column definition.<br/>
+    /// <br/>
+    /// <a href="https://github.com/gavin1970/Chizl.TextConverter/blob/master/Chizl.TextConverter/models/ColumnDefinition.cs">View on Github</a>
+    /// </summary>
     public class ColumnDefinition
     {
         #region Constructors
@@ -11,7 +16,9 @@ namespace Chizl.TextConverter
         private ColumnDefinition() { IsEmpty = true; }
 
         /// <summary>
-        /// Setup a column definition.
+        /// Setup a column definition.<br/>
+        /// <br/>
+        /// <a href="https://github.com/gavin1970/Chizl.TextConverter/blob/master/Chizl.TextConverter/models/ColumnDefinition.cs">View on Github</a>
         /// </summary>
         /// <param name="name">Column Name</param>
         /// <param name="dataType">Data Type required for column.</param>
@@ -62,7 +69,7 @@ namespace Chizl.TextConverter
         /// </summary>
         public List<object> AllowedValues { get; set; } = new List<object>();
         /// <summary>
-        /// Allows a column to have null values, including Int32 for examlpe.
+        /// Allows a column to have null values, including Int64 for examlpe.
         /// </summary>
         public bool AllowDBNull { get; set; } = false;
         #endregion
