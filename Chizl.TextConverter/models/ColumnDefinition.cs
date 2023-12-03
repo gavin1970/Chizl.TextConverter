@@ -13,7 +13,7 @@ namespace Chizl.TextConverter
         /// <summary>
         /// Only the property Empty can call this Constructor.
         /// </summary>
-        private ColumnDefinition() { IsEmpty = true; }
+        private ColumnDefinition() {}
 
         /// <summary>
         /// Setup a column definition.<br/>
@@ -40,7 +40,7 @@ namespace Chizl.TextConverter
         /// <summary>
         /// Return if this is a empty class or not.
         /// </summary>
-        public bool IsEmpty { get; }
+        public bool IsEmpty { get; } = true;
         /// <summary>
         /// Create an empty class to pass in, when not required, but can't be null.
         /// </summary>
