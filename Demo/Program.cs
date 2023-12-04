@@ -1,20 +1,24 @@
 ﻿using Chizl.TextConverter;
 using System.Data;
+using System.Runtime.CompilerServices;
 using System.Text;
 
-Console.OutputEncoding = Encoding.UTF8;
-//may want this the first time, but throws warnings during builds.  After the first time, it caches your console buffer.
-//Console.WindowWidth = Console.LargestWindowWidth;
+const string KeyPressOptions = "By pressing 'Esc', your requesting to skip the rest of this file.  " +
+    "Press 'Esc' again to confirm, press 'End' to display until end of file without pause, " +
+    "or any other key to continue with pause.";
 
-Validate("./test_comma_delimited.txt", FileType.Comma_Delimited, TestDelimited());
-Console.Clear();
-Validate("./test_tab_delimited.txt", FileType.Tab_Delimited, TestDelimited());
-Console.Clear();
-Validate("./test_Semicolon_delimited.txt", FileType.Semicolon_Delimited, TestDelimited());
-Console.Clear();
-Validate("./test_fixed_length_columns.txt", FileType.Fixed_Length_Columns, TestFixLengthColumns(), 20);
-Console.Clear();
-Validate("./test_fixed_length_columns_full.txt", FileType.Fixed_Length_Columns, TestFixLengthColumns(), 40);
+Console.OutputEncoding = Encoding.UTF8;
+Console.TreatControlCAsInput = false;   //allows control-c to close window
+
+// may want this the first time, but throws warnings during builds.  After the first time, it caches your console buffer.
+// Console.WindowWidth = Console.LargestWindowWidth;
+
+Validate("./test_comma_delimited.txt", FileTypes.Comma_Delimited, TestDelimited());
+Validate("./test_quote_comma_delimited.txt", FileTypes.Quote_Comma_Delimited, TestDelimited());
+Validate("./test_tab_delimited.txt", FileTypes.Tab_Delimited, TestDelimited());
+Validate("./test_Semicolon_delimited.txt", FileTypes.Semicolon_Delimited, TestDelimited());
+Validate("./test_fixed_length_columns.txt", FileTypes.Fixed_Length_Columns, TestFixLengthColumns(), 20);
+Validate("./test_fixed_length_columns_full.txt", FileTypes.Fixed_Length_Columns, TestFixLengthColumns(), 40);
 
 List<ColumnDefinition> TestFixLengthColumns()
 {
@@ -89,14 +93,14 @@ List<ColumnDefinition> TestDelimited()
     };
 }
 
-void Validate(string fileName, FileType ft, List<ColumnDefinition> columns, int maxRecordsToDisplay = 10)
+void Validate(string fileName, FileTypes ft, List<ColumnDefinition> columns, int maxRecordsToDisplay = 10)
 {
     if (maxRecordsToDisplay <= 0) maxRecordsToDisplay = 1;
-
+    bool skipPause = false;
     DrawTitle($"Running test on: {fileName}");
 
     var validationLog = new List<ValidationLog>();
-    FileLoad fileLoad = new(fileName, ft)
+    LoadFile fileLoad = new(fileName, ft)
     {
         ColumnDefinitions = columns
     };
@@ -104,19 +108,21 @@ void Validate(string fileName, FileType ft, List<ColumnDefinition> columns, int 
     if (fileLoad.Validate(out validationLog))
     {
         Console.WriteLine("Validation Success!");
-        DisplayTable(fileLoad, maxRecordsToDisplay);
+        skipPause = DisplayTable(fileLoad, maxRecordsToDisplay);
     }
     else
     {
         Console.WriteLine("Validation Failed");
-        DisplayLog(validationLog, maxRecordsToDisplay);
+        skipPause = DisplayLog(validationLog, maxRecordsToDisplay);
     }
 
-    Console.ReadKey();
+    if(!skipPause)
+        Console.ReadKey(true);
 }
 
-void DisplayLog(List<ValidationLog> validationLog, int maxRecordsToDisplay = 10, bool errorsOnly = true) 
+bool DisplayLog(List<ValidationLog> validationLog, int maxRecordsToDisplay = 10, bool errorsOnly = true) 
 {
+    bool skipPause = false;
     if (maxRecordsToDisplay <= 0) maxRecordsToDisplay = 1;
     int orgMaxRecToDisplay = maxRecordsToDisplay;
 
@@ -132,23 +138,36 @@ void DisplayLog(List<ValidationLog> validationLog, int maxRecordsToDisplay = 10,
         if (!errorsOnly || vl.MessageType == MessageTypes.Error) 
         {
             Console.WriteLine(msg);
-            if (maxRecordsToDisplay-- <= 0) { Console.ReadKey(); maxRecordsToDisplay = orgMaxRecToDisplay; }
+            if (maxRecordsToDisplay-- <= 0)
+            {
+                skipPause = PromptForInput(out bool setMaxRow);
+                if (skipPause)
+                    break;
+
+                if (setMaxRow)
+                    maxRecordsToDisplay = validationLog.Count;
+                else
+                    maxRecordsToDisplay = orgMaxRecToDisplay;
+            }
         }
 
         File.AppendAllText(".\\validation.log", $"{msg}\n");
     }
+
+    return skipPause;
 }
 
-void DisplayTable(FileLoad fileLoad, int maxRecordsToDisplay = 10)
+bool DisplayTable(LoadFile fileLoad, int maxRecordsToDisplay = 10)
 {
+    bool skipPause = false;
     if (maxRecordsToDisplay <= 0) maxRecordsToDisplay = 1;
     int orgMaxRecToDisplay = maxRecordsToDisplay;
 
-    DataTable dt = fileLoad.ToDataTable.Copy();
+    DataTable dt = fileLoad.AsDataTable.Copy();
     if (dt == null)
     {
         Console.WriteLine("Failed to pull table.");
-        return;
+        return skipPause;
     }
 
     DrawTitle($"Displaying DataTable: {dt.TableName} with {dt.Rows.Count} record{(dt.Rows.Count == 1 ? "" : "s")}.");
@@ -216,14 +235,56 @@ void DisplayTable(FileLoad fileLoad, int maxRecordsToDisplay = 10)
         //write row
         Console.WriteLine(sb.ToString());
 
-        if (maxRecordsToDisplay-- <= 0) { Console.ReadKey(); maxRecordsToDisplay = orgMaxRecToDisplay; }
+        if (maxRecordsToDisplay-- <= 0) 
+        {
+            skipPause = PromptForInput(out bool setMaxRow);
+            if (skipPause)
+                break;
+
+            if(setMaxRow)
+                maxRecordsToDisplay = dt.Rows.Count;
+            else
+                maxRecordsToDisplay = orgMaxRecToDisplay;
+        }
     }
+    
     //ending
     Console.WriteLine($"{(new string('-', sb.ToString().Length))}");
+    return skipPause;
+}
+
+bool PromptForInput(out bool setMaxRow)
+{
+    bool skipPause = false;
+    setMaxRow = false;
+
+    ConsoleKeyInfo key = Console.ReadKey(true);
+
+    if (key.Key == ConsoleKey.Escape)
+    {
+        Console.WriteLine(KeyPressOptions);
+        key = Console.ReadKey(true);
+
+        if (key.Key == ConsoleKey.Escape)
+        {
+            skipPause = true;
+        }
+        else if (key.Key == ConsoleKey.End)
+        {
+            setMaxRow = true;
+            Console.SetCursorPosition(0, Console.CursorTop - 1);    //deleting the Console.WriteLine above.
+        }
+        else
+            Console.SetCursorPosition(0, Console.CursorTop - 1);    //deleting the Console.WriteLine above.
+    }
+
+    return skipPause;
 }
 
 void DrawTitle(string title)
 {
+    Console.Clear();
+
     int barSizer = 20;
     title = $"=[ {title} ]=";
     int len = (barSizer * 2) + title.Length;

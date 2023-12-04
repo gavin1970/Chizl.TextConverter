@@ -20,8 +20,8 @@ Visual Studio 2022 Professional
 ## Example with CSV
  ```csharp
     var validationLog = new List<ValidationLog>();
-    FileLoad fileLoad = new(".\\myfile.csv", FileType.Comma_Delimited);
-    fileLoad.ColumnDefinitions = new()
+    LoadFile loadFile = new(".\\myfile.csv", FileTypes.Comma_Delimited);
+    loadFile.ColumnDefinitions = new()
     {
         new ColumnDefinition("Column1", DataTypes.String, 20),
         new ColumnDefinition("Column2", DataTypes.String, 1) { AllowedValues=new List<object>{ "A", "B" } },
@@ -33,10 +33,10 @@ Visual Studio 2022 Professional
         new ColumnDefinition("Column8", DataTypes.ByteArray, 35)
     };
 
-    if (fileLoad.Validate(out validationLog)) 
+    if (loadFile.Validate(out validationLog)) 
     {
         Console.WriteLine("Validation Success!");
-        DataTable dt = fileLoad.ToDataTable.Copy();
+        DataTable dt = loadFile.AsDataTable.Copy();
     }
     else
     {
@@ -50,8 +50,8 @@ Visual Studio 2022 Professional
 ## Example with Fixed Length Columns
 ```csharp
     var validationLog = new List<ValidationLog>();
-    FileLoad fileLoad = new(".\\myfile_FixedLengthColumns.txt", FileType.Fixed_Length_Columns);
-    fileLoad.ColumnDefinitions = new()
+    LoadFile loadFile = new(".\\myfile_FixedLengthColumns.txt", FileTypes.Fixed_Length_Columns);
+    loadFile.ColumnDefinitions = new()
     {
         new ColumnDefinition("MSACode", DataTypes.Int64, 5),
         new ColumnDefinition("MetroDivCode", DataTypes.Int64, 5),
@@ -63,10 +63,10 @@ Visual Studio 2022 Professional
         new ColumnDefinition("LimitFor2LivUnits", DataTypes.Int64, 7)
     };
 
-    if (fileLoad.Validate(out validationLog)) 
+    if (loadFile.Validate(out validationLog)) 
     {
         Console.WriteLine("Validation Success!");
-        DataTable dt = fileLoad.ToDataTable.Copy();
+        DataTable dt = loadFile.AsDataTable.Copy();
     }
     else
     {
