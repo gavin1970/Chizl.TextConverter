@@ -1,5 +1,14 @@
 ﻿# Chizl.TextConverter
-Just starting on this project, but currently supports the following text files and stores them into a DataTable.
+Load text files into DataTables and will eventually be able to write to different file types.
+
+## Current Supported File Types
+- Fixed Length Columns
+- Tab Delimited
+- Comma Delimited
+- Quote Comma Delimited
+- Semicolon Delimited
+
+## Supported Column Types:
 - Boolean
 - Byte[]
 - DateTime
