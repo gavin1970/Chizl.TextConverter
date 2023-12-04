@@ -5,7 +5,7 @@ VisualStudioVersion = 17.7.34221.43
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Chizl.TextConverter", "Chizl.TextConverter\Chizl.TextConverter.csproj", "{F1E5A04D-10B1-4904-A56D-CD61785036B5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo", "Demo\Demo.csproj", "{8D086E35-DBB2-4E9E-BF32-5AA6D4ABF347}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Demo", "Demo\Demo.csproj", "{8D086E35-DBB2-4E9E-BF32-5AA6D4ABF347}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
