@@ -1,6 +1,5 @@
 ﻿using Chizl.TextConverter;
 using System.Data;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 const string KeyPressOptions = "By pressing 'Esc', your requesting to skip the rest of this file.  " +

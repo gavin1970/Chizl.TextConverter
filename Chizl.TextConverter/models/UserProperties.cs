@@ -10,6 +10,5 @@ namespace Chizl.TextConverter
         public DataTable AsDataTable { get; internal set; }
         public List<ColumnDefinition> ColumnDefinitions { get; set; } = new List<ColumnDefinition>();
         public bool TrimValues { get; set; } = false;
-
     }
 }
