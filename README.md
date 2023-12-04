@@ -1,13 +1,21 @@
 ﻿# Chizl.TextConverter
-Just starting on this project, but currently supports (csv, tab, semicolon, fixed length column) text files and stores them into a DataTable.
+Just starting on this project, but currently supports the following text files and stores them into a DataTable.
+- Boolean
+- Byte[]
+- DateTime
+- Decimal
+- Guid
+- Int64
+- String
+- TimeSpan
 
-.NETCore Demo console included.
+A .NET6 Core console Demo included.
 
 ## Future
 - Add save DataTable to csv, json, tab-delimited, semicolon-delimited, and more to come....
 
 ## Written in
-Visual Studio 2022 Professional
+- Visual Studio 2022 Professional on Win11
 
 ## Supports
 - netstandard2.0
@@ -17,6 +25,9 @@ Visual Studio 2022 Professional
 - net6.0
 - net7.0
  
+## Dependencies
+- None
+
 ## Example with CSV
  ```csharp
     var validationLog = new List<ValidationLog>();
