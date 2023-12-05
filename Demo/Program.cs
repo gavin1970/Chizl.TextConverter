@@ -12,6 +12,8 @@ Console.TreatControlCAsInput = false;   //allows control-c to close window
 // may want this the first time, but throws warnings during builds.  After the first time, it caches your console buffer.
 // Console.WindowWidth = Console.LargestWindowWidth;
 
+LoadFile fileLoad;
+
 Validate("./test_comma_delimited.txt", FileTypes.Comma_Delimited, TestDelimited());
 Validate("./test_quote_comma_delimited.txt", FileTypes.Quote_Comma_Delimited, TestDelimited());
 Validate("./test_tab_delimited.txt", FileTypes.Tab_Delimited, TestDelimited());
@@ -43,7 +45,10 @@ List<ColumnDefinition> TestFixLengthColumns()
         County Code (FIPS)                104-106           9(3)
         State Name                        107-132           X(26)
         County Name                       133-147           X(15)
-        County Transaction Date           148-155           9(8)   - This is supposed to be an int, however, as seen in file, it's empty. So have to make it a String.
+        County Transaction Date           148-155           9(8)
+            - This is supposed to be an int. As seen in demo file it's empty. AllowDBNull 
+              property needs to be set. Value DataType response for AllowDBNull columns, 
+              if empty, is DBNull for all DataTypes.
         Limit Transaction Date            156-163           9(8)
         Median Price Determining Limit    164-170           9(7)
         Year For Median Determining Limit 171-175           9(4) 
@@ -78,7 +83,7 @@ List<ColumnDefinition> TestDelimited()
     //byte[] bytes = Encoding.ASCII.GetBytes(ts.ToString());
     //string enc = Convert.ToBase64String(bytes);
 
-    //NOTE: Because this is CSV format, these sizes that are NOT for string, are ignored, but can be used for display.
+    //NOTE: Because this is CSV format, these sizes that are NOT string, are ignored, but can be used for display.
     return new()
     {
         new ColumnDefinition("Column1", DataTypes.String, 20),
@@ -98,13 +103,13 @@ void Validate(string fileName, FileTypes ft, List<ColumnDefinition> columns, int
     bool skipPause = false;
     DrawTitle($"Running test on: {fileName}");
 
-    var validationLog = new List<ValidationLog>();
-    LoadFile fileLoad = new(fileName, ft)
+    var validationLog = new List<AuditLog>();
+    fileLoad = new(fileName, ft)
     {
         ColumnDefinitions = columns
     };
 
-    if (fileLoad.Validate(out validationLog))
+    if (fileLoad.Validate())
     {
         Console.WriteLine("Validation Success!");
         skipPause = DisplayTable(fileLoad, maxRecordsToDisplay);
@@ -112,14 +117,14 @@ void Validate(string fileName, FileTypes ft, List<ColumnDefinition> columns, int
     else
     {
         Console.WriteLine("Validation Failed");
-        skipPause = DisplayLog(validationLog, maxRecordsToDisplay);
+        skipPause = DisplayLog(maxRecordsToDisplay);
     }
 
     if(!skipPause)
         Console.ReadKey(true);
 }
 
-bool DisplayLog(List<ValidationLog> validationLog, int maxRecordsToDisplay = 10, bool errorsOnly = true) 
+bool DisplayLog(int maxRecordsToDisplay = 10, bool errorsOnly = true) 
 {
     bool skipPause = false;
     if (maxRecordsToDisplay <= 0) maxRecordsToDisplay = 1;
@@ -129,10 +134,10 @@ bool DisplayLog(List<ValidationLog> validationLog, int maxRecordsToDisplay = 10,
     if (File.Exists(".\\validation.log"))
         File.Delete(".\\validation.log");
 
-    foreach (ValidationLog vl in validationLog)
+    foreach (AuditLog vl in fileLoad.AuditLogs)
     {
-        var locType = vl.ValidationType == ValidationTypes.LineImport ? "Line" : "Column";
-        string msg = $"{vl.ValidationType} - {locType}#: {vl.Location} - {vl.Message}";
+        var locType = vl.ValidationType.Name().Contains("_Line") ? "Line" : "Column";
+        string msg = $"{vl.ValidationType} - {(vl.Location > 0 ? $"{locType}#: {vl.Location} - " : "")} {vl.Message}";
 
         if (!errorsOnly || vl.MessageType == MessageTypes.Error) 
         {
@@ -144,7 +149,7 @@ bool DisplayLog(List<ValidationLog> validationLog, int maxRecordsToDisplay = 10,
                     break;
 
                 if (setMaxRow)
-                    maxRecordsToDisplay = validationLog.Count;
+                    maxRecordsToDisplay = fileLoad.AuditLogs.Count;
                 else
                     maxRecordsToDisplay = orgMaxRecToDisplay;
             }
@@ -218,14 +223,18 @@ bool DisplayTable(LoadFile fileLoad, int maxRecordsToDisplay = 10)
             //should never be, but lets check.
             if (dr[dc.ColumnName] != null)
             {
+                //check if data inside is a DBNull Type.
                 if (dr[dc.ColumnName].GetType() == typeof(DBNull))
                     data = "DBNull";
                 else if (dc.DataType == typeof(byte[]))
+                    //if byte array, convert to Base64 string for display
                     data = Convert.ToBase64String((byte[])dr[dc.ColumnName]);
                 else
+                    //convert to string
                     data = dr[dc.ColumnName].ToString();
             }
 
+            //if data exist
             if (!string.IsNullOrWhiteSpace(data))
                 sb.Append($"{data}{(new string(' ', Math.Abs(colSize - data.Length)))}| ");
             else

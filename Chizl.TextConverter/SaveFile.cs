@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
 using System.IO;
 
@@ -7,6 +6,7 @@ namespace Chizl.TextConverter
 {
     public class SaveFile : UserProperties
     {
+        private bool OverwriteDstFile { get; }
         public SaveFile(DataTable dataTable, string dstFile, FileTypes dstFileType, bool overwriteDstFile = false)
         {
             if (dataTable == null || dataTable.Columns.Count == 0 || dataTable.Rows.Count == 0)
@@ -18,15 +18,47 @@ namespace Chizl.TextConverter
             else if (dstFileType == FileTypes.Empty)
                 throw new ArgumentException($"'{dstFileType}' can not be set to Empty.  This is for internal use only.");
 
+            //should never really need this at this point, since it's
+            //already validated, but doesn't hurt to double check later.
+            OverwriteDstFile = overwriteDstFile;    
             AsDataTable = dataTable;
             FilePath = dstFile;
             FileType = dstFileType;
         }
 
-        public bool Save(out List<ValidationLog> validationLog)
+        public bool Save()
         {
-            validationLog = new List<ValidationLog>();
+            bool success = false;
+
+            if(!CheckDestination())
+                return success;
+
+
             throw new NotImplementedException("This is not ready yet.");
+        }
+
+        /// <summary>
+        /// Check if file exists and delete it.
+        /// </summary>
+        /// <returns>bool true = success, false = check AuditLogs</returns>
+        private bool CheckDestination()
+        {
+            bool retVal = false;
+            try
+            {
+                AuditLogs.Add(new AuditLog(AuditTypes.DeleteFile, Common.NO_LOCATION, $"Checking if file '{FilePath}' exists.", MessageTypes.Information, ColumnDefinition.Empty));
+
+                if (OverwriteDstFile && File.Exists(FilePath))
+                    File.Delete(FilePath);
+
+                retVal = true;
+            }
+            catch (Exception ex)
+            {
+                AuditLogs.Add(new AuditLog(AuditTypes.DeleteFile, Common.NO_LOCATION, ex.Message, MessageTypes.Error, ColumnDefinition.Empty));
+            }
+
+            return retVal;
         }
     }
 }

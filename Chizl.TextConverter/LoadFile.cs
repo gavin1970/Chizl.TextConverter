@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Data;
-using System.Linq;
 using System.Collections.Generic;
 
 namespace Chizl.TextConverter
@@ -29,149 +28,182 @@ namespace Chizl.TextConverter
             else if (!File.Exists(srcFile))
                 throw new ArgumentException($"'{srcFile}' does not exists.");
             else if (srcFileTypes == FileTypes.Empty)
-                throw new ArgumentException($"'{srcFileTypes}' can not be set to Empty.  This is for internal use only.");
+                throw new ArgumentException($"'{nameof(srcFileTypes)}' can not be set to Empty.  This is for internal use only.");
 
             FilePath = srcFile;
             FileType = srcFileTypes;
-            AsDataTable = CreateTable(Path.GetFileName(FilePath));
+            AsDataTable = Common.CreateTable(Path.GetFileName(FilePath));
         }
+        #region Public Methods
         /// <summary>
         /// Loads and validates all data in file and stores them into a DataTable.
         /// </summary>
         /// <param name="validationLog">Will return with all information and errors that may occure.</param>
-        /// <returns>bool - success or error</returns>
-        public bool Validate(out List<ValidationLog> validationLog)
+        /// <returns>bool true = success, false = check AuditLogs</returns>
+        public bool Validate()
         {
             bool retVal = false;
             int lineNumber = 0;
             FileInfo fi = new FileInfo(FilePath);
-            validationLog = new List<ValidationLog>();
 
+            //if not columns setup.
             if (ColumnDefinitions.Count == 0)
             {
-                validationLog.Add(new ValidationLog(ValidationTypes.Prep, 0, $"No column definitions have been set: Use {nameof(ColumnDefinitions)}", MessageTypes.Error, ColumnDefinition.Empty));
+                AuditLogs.Add(
+                    new AuditLog(
+                        AuditTypes.Import_ColumnDefinition,
+                        Common.NO_LOCATION, 
+                        $"No column definitions have been set: Use {nameof(ColumnDefinitions)}", 
+                        MessageTypes.Error, 
+                        ColumnDefinition.Empty));
                 return retVal;
             }
 
+            //if file exists
             if (fi.Exists)
             {
-                validationLog.Add(new ValidationLog(ValidationTypes.Prep, 0, $"file: '{FilePath}' exists and table name will be called: '{AsDataTable.TableName}", MessageTypes.Information, ColumnDefinition.Empty));
+                AuditLogs.Add(
+                    new AuditLog(
+                        AuditTypes.FileLoad,
+                        Common.NO_LOCATION, 
+                        $"file: '{FilePath}' exists and table name will be called: '{AsDataTable.TableName}", 
+                        MessageTypes.Information, 
+                        ColumnDefinition.Empty));
 
-                if (!AddColumns(ref validationLog))
+                //add all columns to DataTable
+                if (!AddColumns())
                     return retVal;
 
                 try
                 {
+                    //open file for streaming.
                     using (StreamReader sr = new StreamReader(FilePath))
                     {
                         bool hadIssue = false;
                         string line;
 
+                        //read through file, line by line
                         while ((line = sr.ReadLine()) != null)
                         {
                             lineNumber++;
 
-                            List<string> columns = ParseLine(line);
-                            if (columns.Count != ColumnDefinitions.Count)
+                            AuditLogs.Add(
+                                new AuditLog(
+                                    AuditTypes.Import_Line,
+                                    lineNumber,
+                                    $"Loading line with {line.Length}b in size, without trim.  {line.Trim().Length}b trimmed.",
+                                    MessageTypes.Information,
+                                    ColumnDefinition.Empty));
+
+                            //parse out the line based on file type.
+                            List<string> parsedCols = Common.ParseLine(line, this.FileType, this.TrimValues, this.ColumnDefinitions);
+
+                            //if the parse cound is not the same as expected column definition
+                            //count, the row might be malformed, log and move to the next line..
+                            if (parsedCols.Count != ColumnDefinitions.Count)
                             {
                                 hadIssue = true;
-                                validationLog.Add(
-                                    new ValidationLog(
-                                        ValidationTypes.LineImport,
+                                AuditLogs.Add(
+                                    new AuditLog(
+                                        AuditTypes.Import_Line,
                                         lineNumber,
-                                        $"Error during parseing line# {lineNumber}.\nSource Columns: {columns.Count}\nDefinition Columns: {ColumnDefinitions.Count}",
+                                        $"Error during parseing line# {lineNumber}.\n" +
+                                        $"Source Columns: {parsedCols.Count}\n" +
+                                        $"Definition Columns: {ColumnDefinitions.Count}",
                                         MessageTypes.Error,
                                         ColumnDefinition.Empty));
                                 continue;
                             }
 
-                            hadIssue = CreateRow(lineNumber, columns, out DataRow dataRow, ref validationLog);
+                            //take the array data with column definition data and create a record.
+                            hadIssue = CreateRow(lineNumber, parsedCols, out DataRow dataRow);
                             if (hadIssue)
                                 continue;
 
+                            //add the row to DataTable.
                             AsDataTable.Rows.Add(dataRow);
                         }
 
+                        //see if there were any issues.
                         if (!hadIssue)
                             retVal = true;
                     }
                 }
                 catch (Exception ex)
                 {
-                    validationLog.Add(new ValidationLog(ValidationTypes.FileLoad, lineNumber, ex.Message, MessageTypes.Error, ColumnDefinition.Empty));
+                    AuditLogs.Add(
+                        new AuditLog(
+                            AuditTypes.FileLoad, 
+                            lineNumber, 
+                            ex.Message, 
+                            MessageTypes.Error, 
+                            ColumnDefinition.Empty));
                 }
             }
             else
-                validationLog.Add(new ValidationLog(ValidationTypes.Prep, 0, $"File '{FilePath}' Missing", MessageTypes.Error, ColumnDefinition.Empty));
+                AuditLogs.Add(
+                    new AuditLog(
+                        AuditTypes.FileLoad,
+                        Common.NO_LOCATION, 
+                        $"File '{FilePath}' Missing", 
+                        MessageTypes.Error, 
+                        ColumnDefinition.Empty));
 
             return retVal;
         }
-        /// <summary>
-        /// Internal use, but left as public.<br/>
-        /// Since we can't do this: var test = default(Type.GetType($"System.Int32"));<br/>
-        /// To use it, call this instead: GetDefault(Type t) instead.<br/>
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public T GetDefaultValue<T>()
-        {
-            return default(T);
-        }
-        /// <summary>
-        /// Internal use, but left as public.<br/>
-        /// Calls GetDefaultValue() to generate default value;
-        /// </summary>
-        /// <param name="t"></param>
-        /// <returns></returns>
-        public object GetDefault(Type t)
-        {
-            return this.GetType().GetMethod("GetDefaultValue").MakeGenericMethod(t).Invoke(this, null);
-        }
+        #endregion
 
-        /// <summary>
-        /// Converts Internal DataTypes to real System Types.
-        /// </summary>
-        /// <param name="dataType">Chizl.TextConverter DataType</param>
-        /// <returns></returns>
-        private Type GetDataType(DataTypes dataType)
-        {
-            var dt = dataType == DataTypes.ByteArray ? "Byte[]" : dataType.Name();
-            return Type.GetType($"System.{dt}");
-        }
+        #region Private Methods
         /// <summary>
         /// Add columns to DataTable.
         /// </summary>
         /// <param name="validationLog">Will return with all information and errors that may occure.</param>
-        /// <returns></returns>
-        private bool AddColumns(ref List<ValidationLog> validationLog)
+        /// <returns>bool true = success, false = check AuditLogs</returns>
+        private bool AddColumns()
         {
             bool retVal = false;
             int colLoc = 0;
 
             try
             {
+                //loop through all column definitions and create a column for eeach within our DataTable.
                 foreach (ColumnDefinition col in ColumnDefinitions)
                 {
-                    var dType = GetDataType(col.DataType);
+                    //TextConverter.DataType to standard Type.
+                    var dType = Common.GetDataType(col.DataType);
 
+                    //start the build for this column.
                     var dc = new DataColumn(col.Name, dType)
                     {
                         AllowDBNull = col.AllowDBNull
                     };
 
+                    //only setting column size based on being a string.
                     if (col.Size > 0 && dType == typeof(String))
                         dc.MaxLength = col.Size;
 
+                    //add column to DataTable
                     AsDataTable.Columns.Add(dc);
 
-                    validationLog.Add(new ValidationLog(ValidationTypes.ColumnDefinition, (colLoc + 1), $"Added '{col.Name}' to table successfully.", MessageTypes.Information, ColumnDefinitions[colLoc]));
-                    colLoc++;
+                    AuditLogs.Add(
+                        new AuditLog(
+                            AuditTypes.Import_ColumnDefinition, 
+                            (colLoc + 1),   //zero based.
+                            $"Added '{col.Name}' to table successfully.", 
+                            MessageTypes.Information, 
+                            ColumnDefinitions[colLoc++]));
                 }
                 retVal = true;
             }
             catch (Exception ex)
             {
-                validationLog.Add(new ValidationLog(ValidationTypes.ColumnDefinition, colLoc, ex.Message, MessageTypes.Error, ColumnDefinitions[colLoc]));
+                AuditLogs.Add(
+                    new AuditLog(
+                        AuditTypes.Import_ColumnDefinition,
+                        (colLoc + 1),   //zero based.
+                        ex.Message, 
+                        MessageTypes.Error, 
+                        ColumnDefinitions[colLoc]));
             }
 
             return retVal;
@@ -180,45 +212,59 @@ namespace Chizl.TextConverter
         /// Create a DataRow
         /// </summary>
         /// <param name="lineNumber">Row number</param>
-        /// <param name="columns">List of all columns.</param>
+        /// <param name="parsedCols">List parsed out columns for 1 row.</param>
         /// <param name="dataRow">Return of DataRow data</param>
         /// <param name="validationLog">Will return with all information and errors that may occure.</param>
-        /// <returns></returns>
-        private bool CreateRow(int lineNumber, List<string> columns, out DataRow dataRow, ref List<ValidationLog> validationLog)
+        /// <returns>bool true = success, false = check AuditLogs</returns>
+        private bool CreateRow(int lineNumber, List<string> parsedCols, out DataRow dataRow)
         {
             bool hadIssue = false;
 
+            //initialize a blank row.
             dataRow = AsDataTable.NewRow();
-            for (int colLoc = 0; colLoc < columns.Count; colLoc++)
+            //loop through all defind columns.
+            for (int colLoc = 0; colLoc < parsedCols.Count; colLoc++)
             {
-                var retMessage = "";
-                var dataType = GetDataType(ColumnDefinitions[colLoc].DataType);
+                var errMessage = "";
+                //get real type from defined column data type.
+                var dataType = Common.GetDataType(ColumnDefinitions[colLoc].DataType);
 
-                validationLog.Add(
-                    new ValidationLog(
-                        ValidationTypes.ColumnDefinition,
-                        colLoc,
-                        $"Processing Line# {lineNumber}\nColumn Name: {ColumnDefinitions[colLoc].Name}\nColumn Type: {dataType.FullName}",
+                AuditLogs.Add(
+                    new AuditLog(
+                        AuditTypes.Import_ColumnDefinition,
+                        Common.NO_LOCATION,   //handle this within the message.
+                        $"Processing Line# {lineNumber}\nColumn #{(colLoc + 1)} Name: {ColumnDefinitions[colLoc].Name}\nColumn Type: {dataType.FullName}",
                         MessageTypes.Error,
                         ColumnDefinitions[colLoc]));
 
-                if (ConvertColumn(columns[colLoc], ColumnDefinitions[colLoc], out object retData, ref validationLog) && HasValidData(retData, ColumnDefinitions[colLoc], out retMessage))
+                //convert this one column into what it supposed to be.   
+                //HasValidData() validates, including if column is AllowDBNull=true
+                if (ConvertColumn(parsedCols[colLoc], ColumnDefinitions[colLoc], out object retData)
+                    && Common.HasValidData(retData, ColumnDefinitions[colLoc], out errMessage))
                 {
-                    if (retData != DBNull.Value)
-                        dataRow[ColumnDefinitions[colLoc].Name] = Convert.ChangeType(retData, dataType);
-                }
-                else
-                {
-                    if (!string.IsNullOrWhiteSpace(retMessage))
+                    try
                     {
-                        validationLog.Add(
-                            new ValidationLog(
-                                ValidationTypes.DataValidation,
-                                lineNumber,
-                                retMessage,
-                                MessageTypes.Error,
-                                ColumnDefinition.Empty));
+                        //if it data is DBNull, then we will skip updating this column.
+                        if (retData != DBNull.Value)
+                            dataRow[ColumnDefinitions[colLoc].Name] = Convert.ChangeType(retData, dataType);
+                    } 
+                    catch(Exception ex)
+                    {
+                        errMessage = $"Exception while converting and adding '{retData}' " +
+                                     $"({dataType}) to column: {ColumnDefinitions[colLoc].Name}\n{ex.Message}";
                     }
+                }
+
+                //if there is a 
+                if (!string.IsNullOrWhiteSpace(errMessage))
+                {
+                    AuditLogs.Add(
+                        new AuditLog(
+                            AuditTypes.DataValidation,
+                            lineNumber,
+                            errMessage,
+                            MessageTypes.Error,
+                            ColumnDefinition.Empty));
 
                     hadIssue = true;
                     break;
@@ -228,38 +274,23 @@ namespace Chizl.TextConverter
             return hadIssue;
         }
         /// <summary>
-        /// Validating against AllowedValues list passed in for DataColumn.
-        /// </summary>
-        /// <param name="data"></param>
-        /// <param name="colDef"></param>
-        /// <param name="retMessage"></param>
-        /// <returns></returns>
-        private bool HasValidData(object data, ColumnDefinition colDef, out string retMessage)
-        {
-            retMessage = string.Empty;
-            if (colDef.AllowedValues.Count == 0 || colDef.AllowedValues.Contains(data))
-                return true;
-            else
-            {
-                retMessage = $"Invalid Data in '{colDef.Name}'.  Value found was: '{data}' and allowed values must be within: ({String.Join(",", colDef.AllowedValues)})";
-                return false;
-            }
-        }
-        /// <summary>
         /// Convert string data to required data type.
         /// </summary>
         /// <param name="data">Original string data.</param>
         /// <param name="column">Column definition like Type and size.</param>
         /// <param name="newValue">New value after conversion.</param>
         /// <param name="validationLog">Will return with all information and errors that may occure.</param>
-        /// <returns></returns>
-        private bool ConvertColumn(string data,  ColumnDefinition column, out object newValue, ref List<ValidationLog> validationLog)
+        /// <returns>bool true = success, false = check AuditLogs</returns>
+        private bool ConvertColumn(string data,  ColumnDefinition column, out object newValue)
         {
             bool retVal = true;
-            var dataType = GetDataType(column.DataType);
+            //convert local DataType to System.DataType
+            var dataType = Common.GetDataType(column.DataType);
 
-            newValue = GetDefault(dataType);
+            //pulls default for System.DataType
+            newValue = Common.GetDefault(dataType);
 
+            //if it's string, just return what it is, else, we have some checking to do.
             if (column.DataType != DataTypes.String)
             {
                 //non-string needs no spaces before conversions.
@@ -267,7 +298,7 @@ namespace Chizl.TextConverter
 
                 //if empty and no AllowDBNull, no matter the DataType, we are going to skip adding data to the column.
                 if (string.IsNullOrWhiteSpace(data) && column.AllowDBNull)
-                    //return a DBNull.Value, telling caller to skip column data
+                    //return DBNull.Value, telling caller to skip column data
                     newValue = DBNull.Value;
                 else
                 {
@@ -292,6 +323,7 @@ namespace Chizl.TextConverter
                                 retVal = false;
                             break;
                         case DataTypes.Decimal:
+                            //convert and if successul, check decimal size expected.
                             if (Decimal.TryParse(data, out Decimal decVal))
                                 newValue = Math.Round(decVal, column.DecimalSize);
                             else
@@ -310,9 +342,11 @@ namespace Chizl.TextConverter
                                 retVal = false;
                             break;
                         case DataTypes.ByteArray:
+                            //special case
                             newValue = Convert.FromBase64String(data.ToString());
                             break;
                         default:
+                            //should never occur, if setup correctly.
                             newValue = data;
                             break;
                     }
@@ -322,114 +356,16 @@ namespace Chizl.TextConverter
                 newValue = data;
 
             if(!retVal)
-                validationLog.Add(new ValidationLog(ValidationTypes.ColumnDefinition, 0, $"Failed to convert '{data}' to a {column.DataType.Name()}.", MessageTypes.Error, column));
+                AuditLogs.Add(
+                    new AuditLog(
+                        AuditTypes.Import_ColumnDefinition, 
+                        Common.NO_LOCATION, 
+                        $"Failed to convert '{data}' to a {column.DataType.Name()}.", 
+                        MessageTypes.Error, 
+                        column));
 
             return retVal;
         }
-        /// <summary>
-        /// Parses the line into a list of strings for each columns.
-        /// </summary>
-        /// <param name="line">String to parse.</param>
-        /// <returns></returns>
-        private List<string> ParseLine(string line)
-        {
-            var retVal = new List<string>();
-
-            switch(this.FileType)
-            {
-                case FileTypes.Comma_Delimited:
-                    retVal = line.Split(',').ToList();
-                    break;
-                case FileTypes.Quote_Comma_Delimited:
-                    retVal = QuoteCommaParse(line);
-                    break;
-                case FileTypes.Fixed_Length_Columns:
-                    retVal = FixedLengthParse(line);
-                    break;
-                case FileTypes.Semicolon_Delimited:
-                    retVal = line.Split(';').ToList();
-                    break;
-                case FileTypes.Tab_Delimited:
-                    retVal = line.Split('\t').ToList();
-                    break;
-                default: break;
-            }
-
-            if (this.TrimValues)
-                retVal = TrimListValues(retVal);
-
-            return retVal;
-        }
-        /// <summary>
-        /// Special parsing for quote comma delimited.
-        /// </summary>
-        /// <param name="line">String to parse.</param>
-        /// <returns></returns>
-        private List<string> QuoteCommaParse(string line)
-        {
-            var retVal = new List<string>();
-            int iStart = line.IndexOf("\"");
-
-            while(iStart >= 0) 
-            {
-                int iEnd = line.IndexOf("\"", iStart + 1);
-                if (iEnd == -1)
-                    break;      //file not formatted correctly
-
-                //removing quotes
-                var value = line.Substring(iStart + 1, iEnd - (iStart + 1));
-                retVal.Add(value);
-
-                iStart = line.IndexOf("\"", iEnd + 1);
-            }
-
-            return retVal;
-        }
-        /// <summary>
-        /// Special parsing for fixed length columns, usually created by Main Frame machines.
-        /// </summary>
-        /// <param name="line">String to parse.</param>
-        /// <returns></returns>
-        private List<string> FixedLengthParse(string line)
-        {
-            var retVal = new List<string>();
-
-            foreach (ColumnDefinition cd in ColumnDefinitions)
-            {
-                int len = (line.Length >= cd.Size ? cd.Size : line.Length);
-                if (len <= 0)
-                    retVal.Add("");
-                else
-                {
-                    var col = line.Substring(0, len);
-                    retVal.Add(col);
-                    line = line.Substring(len);
-                }
-            }
-
-            return retVal;
-        }
-        /// <summary>
-        /// Will trim each value.before storing into DataRow.
-        /// </summary>
-        /// <param name="retVal">Data to trim up.</param>
-        /// <returns></returns>
-        private List<string> TrimListValues(List<string> retVal)
-        {
-            for(int i=0; i< retVal.Count; i++)
-                retVal[i] = retVal[i].Trim();
-
-            return retVal;
-        }
-        /// <summary>
-        /// Create a DataTable and name it based on the filename
-        /// </summary>
-        /// <param name="fileName"></param>
-        /// <returns></returns>
-        private DataTable CreateTable(string fileName)
-        {
-            string name = RegExFormats.AlphaNumeric.Replace(fileName, "");
-            return new DataTable(name);
-        }
+        #endregion
     }
 }

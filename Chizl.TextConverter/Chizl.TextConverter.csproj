@@ -12,10 +12,14 @@
 				<Nullable>disable</Nullable>
 				<Copyright>© 2023 chizl.com</Copyright>
 				<PackageTags>ascii;csv;fixed length columns;tab-delimited;semicolon-delimited</PackageTags>
-				<FileVersion>3.12.04.00</FileVersion>
+				<FileVersion>3.12.05.01</FileVersion>
 				<AssemblyVersion>3.12.0.0</AssemblyVersion>
-				<Version>3.12.04.0</Version>
+				<Version>3.12.05.0</Version>
 				<EnforceCodeStyleInBuild>False</EnforceCodeStyleInBuild>
 				<PackageReadmeFile>README.md</PackageReadmeFile>
 		</PropertyGroup>
+
+		<ItemGroup>
+		  <None Include="..\.editorconfig" Link=".editorconfig" />
+		</ItemGroup>
 </Project>

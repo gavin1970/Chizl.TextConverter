@@ -4,6 +4,7 @@ namespace Chizl.TextConverter
 {
     /// <summary>
     /// Setup a column definition.<br/>
+    /// The following properties can be setup post construction: (AllowedValues, AllowDBNull)
     /// <br/>
     /// <a href="https://github.com/gavin1970/Chizl.TextConverter/blob/master/Chizl.TextConverter/models/ColumnDefinition.cs">View on Github</a>
     /// </summary>
@@ -16,7 +17,8 @@ namespace Chizl.TextConverter
         private ColumnDefinition() {}
 
         /// <summary>
-        /// Setup a column definition.<br/>
+        /// Setup a column's definition.<br/>
+        /// The following properties can be setup post construction: (AllowedValues, AllowDBNull)
         /// <br/>
         /// <a href="https://github.com/gavin1970/Chizl.TextConverter/blob/master/Chizl.TextConverter/models/ColumnDefinition.cs">View on Github</a>
         /// </summary>

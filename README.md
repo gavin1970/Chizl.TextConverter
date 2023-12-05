@@ -39,7 +39,6 @@ A .NET6 Core console Demo included.
 
 ## Example with CSV
  ```csharp
-    var validationLog = new List<ValidationLog>();
     LoadFile loadFile = new(".\\myfile.csv", FileTypes.Comma_Delimited);
     loadFile.ColumnDefinitions = new()
     {
@@ -53,14 +52,14 @@ A .NET6 Core console Demo included.
         new ColumnDefinition("Column8", DataTypes.ByteArray, 35)
     };
 
-    if (loadFile.Validate(out validationLog)) 
+    if (loadFile.Validate()) 
     {
         Console.WriteLine("Validation Success!");
         DataTable dt = loadFile.AsDataTable.Copy();
     }
     else
     {
-        foreach (ValidationLog vl in validationLog)
+        foreach (AuditLog vl in loadFile.AuditLogs)
         {
             Console.WriteLine($"{vl.MessageType.Name()} {vl.ValidationType.Name()}: {vl.Location} - {vl.Message}");
         }
@@ -69,7 +68,6 @@ A .NET6 Core console Demo included.
 
 ## Example with Fixed Length Columns
 ```csharp
-    var validationLog = new List<ValidationLog>();
     LoadFile loadFile = new(".\\myfile_FixedLengthColumns.txt", FileTypes.Fixed_Length_Columns);
     loadFile.ColumnDefinitions = new()
     {
@@ -83,14 +81,14 @@ A .NET6 Core console Demo included.
         new ColumnDefinition("LimitFor2LivUnits", DataTypes.Int64, 7)
     };
 
-    if (loadFile.Validate(out validationLog)) 
+    if (loadFile.Validate()) 
     {
         Console.WriteLine("Validation Success!");
         DataTable dt = loadFile.AsDataTable.Copy();
     }
     else
     {
-        foreach (ValidationLog vl in validationLog)
+        foreach (AuditLog vl in loadFile.AuditLogs)
         {
             Console.WriteLine($"{vl.MessageType.Name()} {vl.ValidationType.Name()}: {vl.Location} - {vl.Message}");
         }

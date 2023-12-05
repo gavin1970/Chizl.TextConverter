@@ -5,7 +5,7 @@
     /// <br/>
     /// <a href="https://github.com/gavin1970/Chizl.TextConverter/blob/master/Chizl.TextConverter/models/ValidationLog.cs">View on Github</a>
     /// </summary>
-    public class ValidationLog
+    public class AuditLog
     {
         /// <summary>
         /// Represents log entries for internal processing that will be passed back to the caller.<br/>
@@ -17,7 +17,7 @@
         /// <param name="message">Information or Error that might occur.</param>
         /// <param name="msgType">Type of message, Information or Error</param>
         /// <param name="columnDefinition">The column that it's currently processing. Check ColumnDefinition.IsEmpty before using it.</param>
-        public ValidationLog(ValidationTypes type, int location, string message, MessageTypes msgType, ColumnDefinition columnDefinition)
+        public AuditLog(AuditTypes type, int location, string message, MessageTypes msgType, ColumnDefinition columnDefinition)
         {
             ValidationType = type;
             Column = columnDefinition;
@@ -28,7 +28,7 @@
         /// <summary>
         /// Define what type of issue is it.
         /// </summary>
-        public ValidationTypes ValidationType { get; }
+        public AuditTypes ValidationType { get; }
         /// <summary>
         /// Line in source file that had an issue or Column number that had an issue.
         /// </summary>

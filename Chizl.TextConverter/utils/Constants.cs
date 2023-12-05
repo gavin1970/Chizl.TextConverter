@@ -23,11 +23,11 @@ namespace Chizl.TextConverter
             return (int)val;
         }
 
-        public static string Name(this ValidationTypes val)
+        public static string Name(this AuditTypes val)
         {
-            return Enum.GetName(typeof(ValidationTypes), val);
+            return Enum.GetName(typeof(AuditTypes), val);
         }
-        public static int Value(this ValidationTypes val)
+        public static int Value(this AuditTypes val)
         {
             return (int)val;
         }
@@ -66,14 +66,18 @@ namespace Chizl.TextConverter
         Semicolon_Delimited,
     }
 
-    public enum ValidationTypes
+    public enum AuditTypes
     {
         FileLoad = 0,
-        LineImport,
-        RowDefinition,
-        ColumnDefinition,
+        Import_Line,
+        Import_RowDefinition,
+        Import_ColumnDefinition,
+        Export_Line,
+        Export_RowBuild,
+        Export_ColumnDefinition,
         DataValidation,
-        Prep,
+        DeleteFile,
+        SaveFile,
     }
 
     public enum MessageTypes
