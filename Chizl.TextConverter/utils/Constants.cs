@@ -54,6 +54,20 @@ namespace Chizl.TextConverter
             }
             return new Regex(format).Replace(fullString, replaceWith);
         }
+
+        /// <summary>
+        /// Not supported by net47
+        /// </summary>
+        /// <example>
+        /// bool isWindows = OSPlatform.Windows.Running();
+        /// </example>
+        //public static bool Running(this OSPlatform val)
+        //{
+        //    if (RuntimeInformation.IsOSPlatform(val))
+        //        return true;
+        //    else
+        //        return false;
+        //}
     }
 
     public enum FileTypes
@@ -68,16 +82,12 @@ namespace Chizl.TextConverter
 
     public enum AuditTypes
     {
-        FileLoad = 0,
-        Import_Line,
-        Import_RowDefinition,
-        Import_ColumnDefinition,
-        Export_Line,
-        Export_RowBuild,
-        Export_ColumnDefinition,
-        DataValidation,
-        DeleteFile,
-        SaveFile,
+        File = 0,
+        Directory,
+        Row,
+        Column,
+        ColumnDefinition,
+        ColumnConversion
     }
 
     public enum MessageTypes

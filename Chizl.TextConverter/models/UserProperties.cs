@@ -14,6 +14,14 @@ namespace Chizl.TextConverter
         /// </summary>
         public string FilePath { get; internal set; } = string.Empty;
         /// <summary>
+        /// Directory of FileName
+        /// </summary>
+        public string FileName { get; internal set; } = string.Empty;
+        /// <summary>
+        /// Directory of FilePath
+        /// </summary>
+        public string FileDirectory { get; internal set; } = string.Empty;
+        /// <summary>
         /// Get the set FileType for the file.
         /// </summary>
         public FileTypes FileType { get; internal set; } = FileTypes.Empty;

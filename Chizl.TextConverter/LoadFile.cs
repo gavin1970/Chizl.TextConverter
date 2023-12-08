@@ -14,26 +14,48 @@ namespace Chizl.TextConverter
     public class LoadFile : UserProperties
     {
         /// <summary>
+        /// Setup a new Class without setup.<br/>
+        /// var loadFile = LoadFile.Empty
+        /// </summary>
+        public static LoadFile Empty { get { return new LoadFile(); } }
+        /// <summary>
+        /// Is fullly initialzed?
+        /// </summary>
+        public bool IsEmpty { get; private set; } = true;
+
+        #region Constructors
+        /// <summary>
+        /// Only available via Empty property.
+        /// </summary>
+        private LoadFile(){}
+        /// <summary>
         /// Takes a text file and the file type and allows a caller to load all line data into a DataTable.<br/>
         /// <br/>
         /// <a href="https://github.com/gavin1970/Chizl.TextConverter/blob/master/Chizl.TextConverter/FileLoad.cs">View on Github</a>
         /// </summary>
-        /// <param name="srcFile"></param>
-        /// <param name="srcFileTypes"></param>
-        /// <exception cref="ArgumentException"></exception>
+        /// <param name="srcFile">Full path to file to read.</param>
+        /// <param name="srcFileTypes">The type of file to read.</param>
+        /// <exception cref="ArgumentException">Any parameters with error.</exception>
         public LoadFile(string srcFile, FileTypes srcFileTypes)
         {
-            if (string.IsNullOrWhiteSpace(srcFile))
-                throw new ArgumentException($"'{nameof(srcFile)}' is a required parameter.");
-            else if (!File.Exists(srcFile))
-                throw new ArgumentException($"'{srcFile}' does not exists.");
-            else if (srcFileTypes == FileTypes.Empty)
+            if (srcFileTypes == FileTypes.Empty)
                 throw new ArgumentException($"'{nameof(srcFileTypes)}' can not be set to Empty.  This is for internal use only.");
+            else if (string.IsNullOrWhiteSpace(srcFile))
+                throw new ArgumentException($"'{nameof(srcFile)}' is a required parameter.");
 
             FilePath = srcFile;
+            FileDirectory = Path.GetDirectoryName(FilePath);
+            FileName = Path.GetFileName(FilePath);
+
+            if (!File.Exists(FilePath))
+                throw new ArgumentException($"'{FilePath}' does not exists.");
+
             FileType = srcFileTypes;
-            AsDataTable = Common.CreateTable(Path.GetFileName(FilePath));
+            AsDataTable = Common.CreateTable(FileName);
+            IsEmpty = false;
         }
+        #endregion
+
         #region Public Methods
         /// <summary>
         /// Loads and validates all data in file and stores them into a DataTable.
@@ -43,7 +65,7 @@ namespace Chizl.TextConverter
         public bool Validate()
         {
             bool retVal = false;
-            int lineNumber = 0;
+            int RowNumber = 0;
             FileInfo fi = new FileInfo(FilePath);
 
             //if not columns setup.
@@ -51,7 +73,7 @@ namespace Chizl.TextConverter
             {
                 AuditLogs.Add(
                     new AuditLog(
-                        AuditTypes.Import_ColumnDefinition,
+                        AuditTypes.ColumnDefinition,
                         Common.NO_LOCATION, 
                         $"No column definitions have been set: Use {nameof(ColumnDefinitions)}", 
                         MessageTypes.Error, 
@@ -64,7 +86,7 @@ namespace Chizl.TextConverter
             {
                 AuditLogs.Add(
                     new AuditLog(
-                        AuditTypes.FileLoad,
+                        AuditTypes.File,
                         Common.NO_LOCATION, 
                         $"file: '{FilePath}' exists and table name will be called: '{AsDataTable.TableName}", 
                         MessageTypes.Information, 
@@ -85,12 +107,12 @@ namespace Chizl.TextConverter
                         //read through file, line by line
                         while ((line = sr.ReadLine()) != null)
                         {
-                            lineNumber++;
+                            RowNumber++;
 
                             AuditLogs.Add(
                                 new AuditLog(
-                                    AuditTypes.Import_Line,
-                                    lineNumber,
+                                    AuditTypes.Row,
+                                    RowNumber,
                                     $"Loading line with {line.Length}b in size, without trim.  {line.Trim().Length}b trimmed.",
                                     MessageTypes.Information,
                                     ColumnDefinition.Empty));
@@ -105,9 +127,9 @@ namespace Chizl.TextConverter
                                 hadIssue = true;
                                 AuditLogs.Add(
                                     new AuditLog(
-                                        AuditTypes.Import_Line,
-                                        lineNumber,
-                                        $"Error during parseing line# {lineNumber}.\n" +
+                                        AuditTypes.Row,
+                                        RowNumber,
+                                        $"Error during parseing line# {RowNumber}.\n" +
                                         $"Source Columns: {parsedCols.Count}\n" +
                                         $"Definition Columns: {ColumnDefinitions.Count}",
                                         MessageTypes.Error,
@@ -116,7 +138,7 @@ namespace Chizl.TextConverter
                             }
 
                             //take the array data with column definition data and create a record.
-                            hadIssue = CreateRow(lineNumber, parsedCols, out DataRow dataRow);
+                            hadIssue = CreateRow(RowNumber, parsedCols, out DataRow dataRow);
                             if (hadIssue)
                                 continue;
 
@@ -133,8 +155,8 @@ namespace Chizl.TextConverter
                 {
                     AuditLogs.Add(
                         new AuditLog(
-                            AuditTypes.FileLoad, 
-                            lineNumber, 
+                            AuditTypes.File,
+                            RowNumber, 
                             ex.Message, 
                             MessageTypes.Error, 
                             ColumnDefinition.Empty));
@@ -143,7 +165,7 @@ namespace Chizl.TextConverter
             else
                 AuditLogs.Add(
                     new AuditLog(
-                        AuditTypes.FileLoad,
+                        AuditTypes.File,
                         Common.NO_LOCATION, 
                         $"File '{FilePath}' Missing", 
                         MessageTypes.Error, 
@@ -187,7 +209,7 @@ namespace Chizl.TextConverter
 
                     AuditLogs.Add(
                         new AuditLog(
-                            AuditTypes.Import_ColumnDefinition, 
+                            AuditTypes.ColumnDefinition, 
                             (colLoc + 1),   //zero based.
                             $"Added '{col.Name}' to table successfully.", 
                             MessageTypes.Information, 
@@ -199,7 +221,7 @@ namespace Chizl.TextConverter
             {
                 AuditLogs.Add(
                     new AuditLog(
-                        AuditTypes.Import_ColumnDefinition,
+                        AuditTypes.ColumnDefinition,
                         (colLoc + 1),   //zero based.
                         ex.Message, 
                         MessageTypes.Error, 
@@ -211,12 +233,12 @@ namespace Chizl.TextConverter
         /// <summary>
         /// Create a DataRow
         /// </summary>
-        /// <param name="lineNumber">Row number</param>
+        /// <param name="RowNumber">Row number</param>
         /// <param name="parsedCols">List parsed out columns for 1 row.</param>
         /// <param name="dataRow">Return of DataRow data</param>
         /// <param name="validationLog">Will return with all information and errors that may occure.</param>
         /// <returns>bool true = success, false = check AuditLogs</returns>
-        private bool CreateRow(int lineNumber, List<string> parsedCols, out DataRow dataRow)
+        private bool CreateRow(int RowNumber, List<string> parsedCols, out DataRow dataRow)
         {
             bool hadIssue = false;
 
@@ -231,10 +253,10 @@ namespace Chizl.TextConverter
 
                 AuditLogs.Add(
                     new AuditLog(
-                        AuditTypes.Import_ColumnDefinition,
+                        AuditTypes.Column,
                         Common.NO_LOCATION,   //handle this within the message.
-                        $"Processing Line# {lineNumber}\nColumn #{(colLoc + 1)} Name: {ColumnDefinitions[colLoc].Name}\nColumn Type: {dataType.FullName}",
-                        MessageTypes.Error,
+                        $"Processing Line# {RowNumber}\nColumn #{(colLoc + 1)} Name: {ColumnDefinitions[colLoc].Name}\nColumn Type: {dataType.FullName}",
+                        MessageTypes.Information,
                         ColumnDefinitions[colLoc]));
 
                 //convert this one column into what it supposed to be.   
@@ -260,8 +282,8 @@ namespace Chizl.TextConverter
                 {
                     AuditLogs.Add(
                         new AuditLog(
-                            AuditTypes.DataValidation,
-                            lineNumber,
+                            AuditTypes.Column,
+                            RowNumber,
                             errMessage,
                             MessageTypes.Error,
                             ColumnDefinition.Empty));
@@ -358,7 +380,7 @@ namespace Chizl.TextConverter
             if(!retVal)
                 AuditLogs.Add(
                     new AuditLog(
-                        AuditTypes.Import_ColumnDefinition, 
+                        AuditTypes.ColumnConversion, 
                         Common.NO_LOCATION, 
                         $"Failed to convert '{data}' to a {column.DataType.Name()}.", 
                         MessageTypes.Error, 
