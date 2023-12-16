@@ -58,11 +58,11 @@ namespace Chizl.TextConverter
 
         #region Public Methods
         /// <summary>
-        /// Loads and validates all data in file and stores them into a DataTable.
+        /// Loads and validates all data in file and stores them into a in memory DataTable.
         /// </summary>
         /// <param name="validationLog">Will return with all information and errors that may occure.</param>
         /// <returns>bool true = success, false = check AuditLogs</returns>
-        public bool Validate()
+        public bool LoadToDataTable()
         {
             bool retVal = false;
             int RowNumber = 0;
@@ -108,6 +108,18 @@ namespace Chizl.TextConverter
                         while ((line = sr.ReadLine()) != null)
                         {
                             RowNumber++;
+
+                            if (FirstRowIsHeader)
+                            {
+                                AuditLogs.Add(
+                                    new AuditLog(
+                                        AuditTypes.Row,
+                                        RowNumber,
+                                        "Skipping first row, since it's a header.",
+                                        MessageTypes.Information,
+                                        ColumnDefinition.Empty));
+                                continue;
+                            }
 
                             AuditLogs.Add(
                                 new AuditLog(
@@ -345,9 +357,13 @@ namespace Chizl.TextConverter
                                 retVal = false;
                             break;
                         case DataTypes.Decimal:
-                            //convert and if successul, check decimal size expected.
                             if (Decimal.TryParse(data, out Decimal decVal))
-                                newValue = Math.Round(decVal, column.DecimalSize);
+                            {
+                                if (column.DecimalSize > -1)
+                                    newValue = Math.Round(decVal, column.DecimalSize);
+                                else
+                                    newValue = decVal;
+                            }
                             else
                                 retVal = false;
                             break;

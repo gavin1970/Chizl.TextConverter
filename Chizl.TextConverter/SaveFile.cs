@@ -1,6 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
+using System.Drawing;
 using System.IO;
+using System.Linq;
+using System.Text;
 
 namespace Chizl.TextConverter
 {
@@ -39,7 +44,7 @@ namespace Chizl.TextConverter
         /// <param name="createFolder">Default: true<br/>
         /// If folder/directory doesn't exist, create it.</param>
         /// <exception cref="ArgumentException">Any parameters with error.</exception>
-        public SaveFile(DataTable dataTable, string dstFile, FileTypes dstFileType, bool overwriteDstFile = false, bool createFolder = true)
+        public SaveFile(DataTable dataTable, string dstFile, FileTypes dstFileType, bool fileByColDefOnly = false, bool overwriteFile = false, bool createFolder = true)
         {
             if (dataTable == null || dataTable.Columns.Count == 0 || dataTable.Rows.Count == 0)
                 throw new ArgumentException($"'{nameof(dataTable)}' can not be null, no columns, or no rows.");
@@ -50,7 +55,7 @@ namespace Chizl.TextConverter
 
             FilePath = dstFile.Contains("/") ? dstFile.Replace("/", "\\") : dstFile;    //set before IO validation
 
-            if (!overwriteDstFile && File.Exists(FilePath))
+            if (!overwriteFile && File.Exists(FilePath))
                 throw new ArgumentException($"'{FilePath}' file exists and the overwriteDstFile is set to False.");
 
             FileDirectory = Path.GetDirectoryName(FilePath);
@@ -59,6 +64,7 @@ namespace Chizl.TextConverter
             if (!createFolder && !Directory.Exists(FileDirectory))
                 throw new ArgumentException($"'{FileDirectory}' directory doesn't exist and '{nameof(createFolder)}' is set to False.");
 
+            FileByColDefOnly = fileByColDefOnly;
             AsDataTable = dataTable;
             FileType = dstFileType;
             IsEmpty = false;
@@ -72,14 +78,396 @@ namespace Chizl.TextConverter
         /// <returns>If successfully saved.</returns>
         public bool Save()
         {
-            if(!CheckDestination())
-                return false;
-            else
-                throw new NotImplementedException("This is not implemented yet.");
+            bool retVal = false;
+
+            if (IsEmpty)
+                AuditLogs.Add(new AuditLog(AuditTypes.Initialize, Common.NO_LOCATION, $"SaveFile class has not initialize.", MessageTypes.Error, ColumnDefinition.Empty));
+            else if (CheckDestination())
+                retVal = GenerateFile();
+
+            return retVal;
         }
         #endregion
 
         #region Private Methods
+        private bool GenerateFile()
+        {
+            bool retVal = false;
+            switch(FileType)
+            {
+                case FileTypes.Tab_Delimited:
+                    retVal = CreateFileByDelimiter("\t");
+                    break;
+                case FileTypes.Semicolon_Delimited:
+                    retVal = CreateFileByDelimiter(";");
+                    break;
+                case FileTypes.Comma_Delimited:
+                    retVal = CreateFileByDelimiter(",");
+                    break;
+                case FileTypes.Quote_Comma_Delimited:
+                    retVal = CreateFileByDelimiter("\",\"", true);
+                    break;
+                case FileTypes.Fixed_Length_Columns:
+                    retVal = CreateFileByFixedLength();
+                    break;
+            }
+
+            if(!retVal)
+            {
+                try
+                {
+                    if (File.Exists(FilePath))
+                        File.Delete(FilePath);
+                }
+                catch (IOException ex)
+                {
+                    AuditLogs.Add(
+                        new AuditLog(
+                            AuditTypes.File,
+                            Common.NO_LOCATION,
+                            $"Failed to delete file '{FilePath}'.\n" +
+                            $"Exception: {ex.Message}",
+                            MessageTypes.Error,
+                            ColumnDefinition.Empty));
+                }
+            }
+
+            return retVal;
+        }
+        private bool CreateFileByFixedLength()
+        {
+            var retVal = false;
+
+            if(ColumnDefinitions.Count == 0)
+            {
+                AuditLogs.Add(
+                    new AuditLog(
+                        AuditTypes.Initialize,
+                        Common.NO_LOCATION,
+                        "For Fixed Length Column saves, column definitions are required.",
+                        MessageTypes.Error,
+                        ColumnDefinition.Empty));
+                return retVal;
+            }
+
+            var dt = AsDataTable.Copy();
+
+            if (dt == null)
+            {
+                AuditLogs.Add(
+                    new AuditLog(
+                        AuditTypes.Initialize,
+                        Common.NO_LOCATION,
+                        "Failed to pull table.",
+                        MessageTypes.Error,
+                        ColumnDefinition.Empty));
+                return retVal;
+            }
+
+            AuditLogs.Add(
+                new AuditLog(
+                    AuditTypes.File,
+                    Common.NO_LOCATION,
+                    $"Create '{FileName}' from DataTable: {dt.TableName} " +
+                    $"with {dt.Rows.Count} row{(dt.Rows.Count == 1 ? "" : "s")}",
+                    MessageTypes.Information,
+                    ColumnDefinition.Empty));
+
+            try
+            {
+                using (StreamWriter sw = new StreamWriter(FilePath))
+                {
+                    if (FirstRowIsHeader)
+                    {
+                        var sb = new StringBuilder();
+
+                        foreach (var cd in ColumnDefinitions)
+                        {
+                            var colName = cd.Name.Trim();
+                            var maxLegth = cd.Size;
+
+                            if (colName.Length > maxLegth)
+                                colName = colName.Substring(0, maxLegth);
+                            else 
+                            {
+                                var diff = maxLegth - colName.Length;
+                                colName = $"{colName}{(new string(' ', diff))}";
+                            }
+                            sb.Append(colName);
+                        }
+
+                        var line = sb.ToString();
+                        sw.WriteLine(line);
+                    }
+
+                    foreach (DataRow dr in dt.Rows)
+                    {
+                        var sb = new StringBuilder();
+
+                        foreach (var cd in ColumnDefinitions)
+                        {
+                            var maxLegth = cd.Size;
+                            //create empty string for two different type of conversions.
+                            var data = "";
+                            //should never be, but lets check.
+                            if (dr[cd.Name] != null)
+                            {
+                                {
+                                    //check if data inside is a DBNull Type.
+                                    if (dr[cd.Name].GetType() == typeof(DBNull))
+                                        data = "";
+                                    else if (cd.DataType == DataTypes.ByteArray)
+                                        //if byte array, convert to Base64 string for display
+                                        data = Convert.ToBase64String((byte[])dr[cd.Name]);
+                                    else
+                                        data = dr[cd.Name].ToString();
+                                }
+                            }
+
+                            //Every column is required to have a ColumnDefinition.
+                            if (!ValidateData(data, cd.Name, out string newData, true))
+                                throw new Exception($"Validation of column '{cd.Name}' " +
+                                                    $"with data '{data}' from DataTable '{dt.TableName}' " +
+                                                    $"to File has failed.  View previous errors.");
+
+
+                            if (newData.Length > maxLegth)
+                                newData = newData.Substring(0, maxLegth);
+                            else
+                            {
+                                var diff = maxLegth - newData.Length;
+                                newData = $"{newData}{(new string(' ', diff))}";
+                            }
+
+                            sb.Append(newData);
+                        }
+
+                        var line = sb.ToString();
+
+                        //write row
+                        sw.WriteLine(line);
+                    }
+                }
+                retVal = true;
+            }
+            catch (Exception ex)
+            {
+                AuditLogs.Add(
+                    new AuditLog(
+                        AuditTypes.File,
+                        Common.NO_LOCATION,
+                        $"Failed to create '{FileName}' from DataTable: " +
+                        $"{dt.TableName}.\nException: {ex.Message}",
+                        MessageTypes.Error,
+                        ColumnDefinition.Empty));
+            }
+
+            return retVal;
+        }
+
+        private bool CreateFileByDelimiter(string delimiter, bool quoteWrap = false)
+        {
+            var retVal = false;
+            var dt = AsDataTable.Copy();
+            var quote = quoteWrap ? "\"" : "";
+
+            if (dt == null)
+            {
+                AuditLogs.Add(
+                    new AuditLog(
+                        AuditTypes.Initialize, 
+                        Common.NO_LOCATION, 
+                        "Failed to pull table.", 
+                        MessageTypes.Error, 
+                        ColumnDefinition.Empty));
+                return retVal;
+            }
+
+            AuditLogs.Add(
+                new AuditLog(
+                    AuditTypes.File, 
+                    Common.NO_LOCATION, 
+                    $"Create '{FileName}' from DataTable: {dt.TableName} " +
+                    $"with {dt.Rows.Count} row{(dt.Rows.Count == 1 ? "" : "s")}", 
+                    MessageTypes.Information, 
+                    ColumnDefinition.Empty));
+
+            try
+            {
+                using (StreamWriter sw = new StreamWriter(FilePath))
+                {
+                    if (FirstRowIsHeader)
+                    {
+                        var sb = new StringBuilder();
+                        var col = 0;
+
+                        foreach (DataColumn dc in dt.Columns)
+                            sb.Append($"{dc.ColumnName}{(++col >= dt.Columns.Count ? "" : delimiter)}");
+
+                        var line = $"{quote}{sb}{quote}";
+                        sw.WriteLine(line);
+                    }
+
+                    foreach (DataRow dr in dt.Rows)
+                    {
+                        var sb = new StringBuilder();
+                        var col = 0;
+
+                        if (FileByColDefOnly)
+                        {
+                            foreach(var cd in ColumnDefinitions)
+                            {
+                                //create empty string for two different type of conversions.
+                                var data = "";
+                                //should never be, but lets check.
+                                if (dr[cd.Name] != null)
+                                {
+                                    {
+                                        //check if data inside is a DBNull Type.
+                                        if (dr[cd.Name].GetType() == typeof(DBNull))
+                                            data = "";
+                                        else if (cd.DataType == DataTypes.ByteArray)
+                                            //if byte array, convert to Base64 string for display
+                                            data = Convert.ToBase64String((byte[])dr[cd.Name]);
+                                        else
+                                            data = dr[cd.Name].ToString();
+                                    }
+                                }
+
+                                //Every column is required to have a ColumnDefinition.
+                                if (!ValidateData(data, cd.Name, out string newData, true))
+                                    throw new Exception($"Validation of column '{cd.Name}' " +
+                                                        $"with data '{data}' from DataTable '{dt.TableName}' " +
+                                                        $"to File has failed.  View previous errors.");
+
+                                sb.Append($"{newData}{(++col >= dt.Columns.Count ? "" : delimiter)}");
+                            }
+                        }
+                        else
+                        {
+                            foreach (DataColumn dc in dt.Columns)
+                            {
+                                //create empty string for two different type of conversions.
+                                var data = "";
+                                //should never be, but lets check.
+                                if (dr[dc.ColumnName] != null)
+                                {
+                                    //check if data inside is a DBNull Type.
+                                    if (dr[dc.ColumnName].GetType() == typeof(DBNull))
+                                        data = "";
+                                    else if (dc.DataType == typeof(byte[]))
+                                        //if byte array, convert to Base64 string for display
+                                        data = Convert.ToBase64String((byte[])dr[dc.ColumnName]);
+                                    else
+                                        data = dr[dc.ColumnName].ToString();
+                                }
+
+                                //Every column not required to have a ColumnDefinition.
+                                //Lets see if this is one does.
+                                if (!ValidateData(data, dc.ColumnName, out string newData))
+                                    throw new Exception($"Validation of column '{dc.ColumnName}' " +
+                                                        $"with data '{data}' from DataTable '{dt.TableName}' " +
+                                                        $"to File has failed.  View previous errors.");
+
+                                sb.Append($"{newData}{(++col >= dt.Columns.Count ? "" : delimiter)}");
+                            }
+                        }
+
+                        var line = $"{quote}{sb}{quote}";
+
+                        //write row
+                        sw.WriteLine(line);
+                    }
+                }
+                retVal = true;
+            } 
+            catch(Exception ex)
+            {
+                AuditLogs.Add(
+                    new AuditLog(
+                        AuditTypes.File, 
+                        Common.NO_LOCATION, 
+                        $"Failed to create '{FileName}' from DataTable: " +
+                        $"{dt.TableName}.\nException: {ex.Message}", 
+                        MessageTypes.Error, 
+                        ColumnDefinition.Empty));
+            }
+
+            return retVal;
+        }
+        private bool ValidateData(string raw, string columnName, out string newVal, bool required = false)
+        {
+            var retVal = true;
+
+            if (TrimValues)
+                newVal = raw.Trim();
+            else
+                newVal = raw;
+
+            var colDef = ColumnDefinitions.Find(f => f.Name == columnName);
+            var colLoc = ColumnDefinitions.FindIndex(f => f.Name == columnName) + (colDef != null ? 1 : 0);
+
+            if (colDef != null)
+            {
+                AuditLogs.Add(
+                    new AuditLog(
+                        AuditTypes.ColumnConversion,
+                        colLoc,
+                        $"Column Definition was found for column '{columnName}'.",
+                        MessageTypes.Information,
+                        colDef));
+
+                var allowedValues = colDef.AllowedValues;
+                int decimalSize = colDef.DecimalSize;
+
+                if (decimalSize > -1)
+                {
+                    if (decimal.TryParse(newVal.ToString(), out decimal dblVal))
+                        newVal = Math.Round(dblVal, decimalSize).ToString();
+                    else
+                    {
+                        retVal = false;
+                        AuditLogs.Add(
+                            new AuditLog(
+                                AuditTypes.ColumnConversion,
+                                colLoc,
+                                $"DecimalSize is set to '{decimalSize}' for column '{columnName}', but during " +
+                                $"convertsion '{newVal}' could not be convert to a decimal to set floating pointer size.",
+                                MessageTypes.Error,
+                                colDef));
+                    }
+                }
+
+                if (allowedValues != null && allowedValues.Count > 0)
+                {
+                    if (!allowedValues.Contains(newVal))
+                    {
+                        retVal = false;
+                        AuditLogs.Add(
+                            new AuditLog(
+                                AuditTypes.ColumnConversion,
+                                colLoc,
+                                $"AllowedValues is set to '{String.Join(",", allowedValues)}' for " +
+                                $"column '{columnName}', but the value of '{newVal}' was found.",
+                                MessageTypes.Error,
+                                colDef));
+                    }
+                }
+            } 
+            else if(required)
+            {
+                retVal = false;
+                AuditLogs.Add(
+                    new AuditLog(
+                        AuditTypes.ColumnConversion,
+                        colLoc,
+                        $"Column '{columnName}' is required to have a ColumnDefinition, but it's missing.",
+                        MessageTypes.Error,
+                        colDef));
+            }
+
+            return retVal;
+        }
         /// <summary>
         /// Create folder if it doesn't exist.<br/>
         /// Check if file exists and delete's it.
@@ -93,14 +481,29 @@ namespace Chizl.TextConverter
             {
                 if (CheckDirectory(Path.GetDirectoryName(FilePath)) && File.Exists(FilePath))
                 {
-                    AuditLogs.Add(new AuditLog(AuditTypes.File, Common.NO_LOCATION, $"File '{FilePath}' exists.  attempting to delete.", MessageTypes.Information, ColumnDefinition.Empty));
+                    AuditLogs.Add(
+                        new AuditLog(
+                            AuditTypes.File, 
+                            Common.NO_LOCATION, 
+                            $"File '{FilePath}' exists.  " +
+                            $"Attempting to delete.", 
+                            MessageTypes.Information, 
+                            ColumnDefinition.Empty));
+
                     File.Delete(FilePath);
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 retVal = false;
-                AuditLogs.Add(new AuditLog(AuditTypes.File, Common.NO_LOCATION, ex.Message, MessageTypes.Error, ColumnDefinition.Empty));
+                AuditLogs.Add(
+                    new AuditLog(
+                        AuditTypes.File,
+                        Common.NO_LOCATION,
+                        $"Failed to delete file '{FilePath}'.\n" +
+                        $"Exception: {ex.Message}",
+                        MessageTypes.Error,
+                        ColumnDefinition.Empty));
             }
 
             return retVal;
@@ -127,13 +530,15 @@ namespace Chizl.TextConverter
                     for (int i = 0; i < spltPath.Length; i++)
                     {
                         if(buildPath.Length > 0)
-                            buildPath += "\\";
+                            buildPath += "/";   // "/" works in windows an linux
 
                         buildPath += spltPath[i];
 
                         if (!Directory.Exists(buildPath))
                             Directory.CreateDirectory(buildPath);
                     }
+
+                    AuditLogs.Add(new AuditLog(AuditTypes.Directory, Common.NO_LOCATION, $"Directory '{path}' successfully created.", MessageTypes.Information, ColumnDefinition.Empty));
                 }
             }
             catch (Exception ex) 

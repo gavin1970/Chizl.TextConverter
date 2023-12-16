@@ -24,24 +24,18 @@ namespace Demo
 
             // NOTE: SaveData isn't ready, which is why it's commented.
 
-            Validate("test_comma_delimited.txt", FileTypes.Comma_Delimited, TestDelimited());
-            // SaveData("test_comma_delimited.txt", FileTypes.Semicolon_Delimited);
+            RunValidateTest(FileTypes.Comma_Delimited, FileTypes.Fixed_Length_Columns, TestDelimited(), trimData: false);
+            RunValidateTest(FileTypes.Quote_Comma_Delimited, FileTypes.Semicolon_Delimited, TestDelimited());
+            RunValidateTest(FileTypes.Tab_Delimited, FileTypes.Quote_Comma_Delimited, TestDelimited());
+            RunValidateTest(FileTypes.Semicolon_Delimited, FileTypes.Comma_Delimited, TestDelimited());
+            RunValidateTest(FileTypes.Fixed_Length_Columns, FileTypes.Semicolon_Delimited, TestFixLengthColumns());
+            RunValidateTest(FileTypes.Fixed_Length_Columns, FileTypes.Quote_Comma_Delimited, TestFixLengthColumns(), isFull: true);
+        }
 
-            Validate("test_quote_comma_delimited.txt", FileTypes.Quote_Comma_Delimited, TestDelimited());
-            // SaveData("test_quote_comma_delimited.txt", FileTypes.Semicolon_Delimited);
-
-            Validate("test_tab_delimited.txt", FileTypes.Tab_Delimited, TestDelimited());
-            // SaveData("test_tab_delimited.txt", FileTypes.Quote_Comma_Delimited);
-
-            Validate("test_Semicolon_delimited.txt", FileTypes.Semicolon_Delimited, TestDelimited());
-            // SaveData("test_Semicolon_delimited.txt", FileTypes.Comma_Delimited);
-
-            Validate("test_fixed_length_columns.txt", FileTypes.Fixed_Length_Columns, TestFixLengthColumns(), 20);
-            // SaveData("test_fixed_length_columns.txt", FileTypes.Quote_Comma_Delimited);
-
-            Validate("test_fixed_length_columns_full.txt", FileTypes.Fixed_Length_Columns, TestFixLengthColumns(), 40);
-            // SaveData("test_fixed_length_columns_full.txt", FileTypes.Semicolon_Delimited);
-
+        static void RunValidateTest(FileTypes fromType, FileTypes toType, List<ColumnDefinition> colDefs, bool isFull = false, bool trimData = true)
+        {
+            Validate(fromType, colDefs, isFull);
+            SaveData(toType, colDefs, trimData);
         }
 
         /// <summary>
@@ -76,27 +70,26 @@ namespace Demo
         /// </summary>
         static List<ColumnDefinition> TestFixLengthColumns()
         {
-
             return new()
             {
-                new ColumnDefinition("MSACode", DataTypes.Int64, 5),
-                new ColumnDefinition("MetroDivCode", DataTypes.Int64, 5),
-                new ColumnDefinition("MSAName", DataTypes.String, 50),
-                new ColumnDefinition("SOACode", DataTypes.String, 5),
-                new ColumnDefinition("LimitType", DataTypes.String, 1){ AllowedValues=new List<object> { "S", "H" } },
-                new ColumnDefinition("MedianPrice", DataTypes.Int64, 7),
-                new ColumnDefinition("LimitFor1LivUnit", DataTypes.Int64, 7),
-                new ColumnDefinition("LimitFor2LivUnits", DataTypes.Int64, 7),
-                new ColumnDefinition("LimitFor3LivUnits", DataTypes.Int64, 7),
-                new ColumnDefinition("LimitFor4LivUnits", DataTypes.Int64, 7),
-                new ColumnDefinition("StateAbbreviation", DataTypes.String, 2),
-                new ColumnDefinition("CountyCodeFIPS", DataTypes.Int64, 3),
-                new ColumnDefinition("StateName", DataTypes.String, 26),
-                new ColumnDefinition("CountyName", DataTypes.String, 15),
-                new ColumnDefinition("CountyTransDate", DataTypes.Int64, 8) { AllowDBNull=true },  //int with possible empty value
-                new ColumnDefinition("LimitTransDate", DataTypes.Int64, 8),
-                new ColumnDefinition("MedPriceDetLimit", DataTypes.Int64, 7),
-                new ColumnDefinition("YearForMedDetLimit", DataTypes.Int64, 4)
+                new ColumnDefinition("MSACode", DataTypes.Int64, size:5),
+                new ColumnDefinition("MetroDivCode", DataTypes.Int64, size:5),
+                new ColumnDefinition("MSAName", DataTypes.String, size:50),
+                new ColumnDefinition("SOACode", DataTypes.String, size:5),
+                new ColumnDefinition("LimitType", DataTypes.String, size:1){ AllowedValues=new List<object> { "S", "H" } },
+                new ColumnDefinition("MedianPrice", DataTypes.Int64, size:7),
+                new ColumnDefinition("LimitFor1LivUnit", DataTypes.Int64, size:7),
+                new ColumnDefinition("LimitFor2LivUnits", DataTypes.Int64, size:7),
+                new ColumnDefinition("LimitFor3LivUnits", DataTypes.Int64, size:7),
+                new ColumnDefinition("LimitFor4LivUnits", DataTypes.Int64, size:7),
+                new ColumnDefinition("StateAbbreviation", DataTypes.String, size:2),
+                new ColumnDefinition("CountyCodeFIPS", DataTypes.Int64, size:3),
+                new ColumnDefinition("StateName", DataTypes.String, size:26),
+                new ColumnDefinition("CountyName", DataTypes.String, size:15),
+                new ColumnDefinition("CountyTransDate", DataTypes.Int64, size:8) { AllowDBNull=true },  //int with possible empty value
+                new ColumnDefinition("LimitTransDate", DataTypes.Int64, size:8),
+                new ColumnDefinition("MedPriceDetLimit", DataTypes.Int64, size:7),
+                new ColumnDefinition("YearForMedDetLimit", DataTypes.Int64, size:4)
             };
         }
 
@@ -104,48 +97,58 @@ namespace Demo
         /// TimeSpan ts = TimeSpan.MinValue;
         /// byte[] bytes = Encoding.ASCII.GetBytes(ts.ToString());
         /// string enc = Convert.ToBase64String(bytes);
-        /// NOTE: Because this is CSV format, these sizes that are NOT string, are ignored, but can be used for display.
+        /// NOTE: Because this is CSV format, these sizes that are NOT string, are ignored for LoadFile 
+        /// unless Fixed Column Sized. They can also be used for SaveFile on Fixed Column Sizes.
         /// </summary>
         static List<ColumnDefinition> TestDelimited()
         {
             return new()
             {
-                new ColumnDefinition("Column1", DataTypes.String, 20),
-                new ColumnDefinition("Column2", DataTypes.String, 1){ AllowedValues=new List<object>{ "A", "B" } },
-                new ColumnDefinition("Column3", DataTypes.DateTime),
-                new ColumnDefinition("Column4", DataTypes.Decimal, decimalSize:2),
-                new ColumnDefinition("Column5", DataTypes.Boolean),
-                new ColumnDefinition("Column6", DataTypes.Int64),
-                new ColumnDefinition("Column7", DataTypes.TimeSpan, 25),
-                new ColumnDefinition("Column8", DataTypes.ByteArray, 35)
+                new ColumnDefinition("Column1", DataTypes.String, size:20),
+                new ColumnDefinition("Column2", DataTypes.String, size:1) { AllowedValues=new List<object>{ "A", "B" } },
+                new ColumnDefinition("Column3", DataTypes.DateTime, size:25),
+                new ColumnDefinition("Column4", DataTypes.Decimal, size:10, decimalSize:2),
+                new ColumnDefinition("Column5", DataTypes.Boolean, size:10),
+                new ColumnDefinition("Column6", DataTypes.Int64, size:10),
+                new ColumnDefinition("Column7", DataTypes.TimeSpan, size:30),
+                new ColumnDefinition("Column8", DataTypes.ByteArray, size:48)
             };
         }
 
-        static void SaveData(string fileName, FileTypes ft)
+        static void SaveData(FileTypes ft, List<ColumnDefinition> colDefs, bool trimData = true)
         {
-            fileName = $".\\{Path.GetFileNameWithoutExtension(fileName)}_was.txt";
-            bool skipPause = false;
+            if (fileLoad.IsEmpty)
+                return;
+
+            var skipPause = false;
+
+            var fileName = $".\\Export\\{Path.GetFileNameWithoutExtension(fileLoad.FileName)}_to_{ft.Name()}.txt";
 
             DrawTitle($"Saving file: {fileName}, Type: {ft}");
 
-            saveFile = new SaveFile(fileLoad.AsDataTable, fileName, ft, true, true);
+            saveFile = new SaveFile(fileLoad.AsDataTable, fileName, ft, fileByColDefOnly: false, overwriteFile: true, createFolder: true) 
+                                    { TrimValues = trimData, FirstRowIsHeader = true, ColumnDefinitions = colDefs };
+
             if (saveFile.Save())
-                Console.WriteLine("Validation Success!");
+                Console.WriteLine("Save Success!");
             else
             {
-                Console.WriteLine("Validation Failed");
-                skipPause = DisplayLog(30);
+                Console.WriteLine("Save Failed");
+                skipPause = DisplayLog(30, true, false);
             }
 
             if (!skipPause)
                 Console.ReadKey(true);
         }
 
-        static void Validate(string fileName, FileTypes ft, List<ColumnDefinition> columns, int maxRecordsToDisplay = 10)
+        static void Validate(FileTypes ft, List<ColumnDefinition> columns, bool isFull = false)
         {
-            fileName = $".\\{fileName}";
             bool skipPause;
-            if (maxRecordsToDisplay <= 0) maxRecordsToDisplay = 1;
+            int maxRecordsToDisplay = ft == FileTypes.Fixed_Length_Columns ? (isFull ? 40 : 20) : 10;
+
+            var ext = ".txt";
+            var full = isFull ? "_full" : "";
+            var fileName = $@".\data\{ft.Name()}{full}{ext}";
 
             DrawTitle($"Running test on: {fileName}");
 
@@ -154,7 +157,7 @@ namespace Demo
                 ColumnDefinitions = columns
             };
 
-            if (fileLoad.Validate())
+            if (fileLoad.LoadToDataTable())
             {
                 Console.WriteLine("Validation Success!");
                 skipPause = DisplayTable(fileLoad, maxRecordsToDisplay);
@@ -169,10 +172,9 @@ namespace Demo
                 Console.ReadKey(true);
         }
 
-        static bool DisplayLog(int maxRecordsToDisplay = 10, bool errorsOnly = true, bool isLoad = true)
+        static bool DisplayLog(int maxRecordsToDisplay, bool errorsOnly = true, bool isLoad = true)
         {
             bool skipPause = false;
-            if (maxRecordsToDisplay <= 0) maxRecordsToDisplay = 1;
             int orgMaxRecToDisplay = maxRecordsToDisplay;
 
             DrawTitle("Displaying validation log");
@@ -290,7 +292,7 @@ namespace Demo
                 //write row
                 Console.WriteLine(sb.ToString());
 
-                if (maxRecordsToDisplay-- <= 0)
+                if (--maxRecordsToDisplay <= 0)
                 {
                     skipPause = PromptForInput(out bool setMaxRow);
                     if (skipPause)

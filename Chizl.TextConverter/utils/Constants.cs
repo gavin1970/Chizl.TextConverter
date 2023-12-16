@@ -55,19 +55,14 @@ namespace Chizl.TextConverter
             return new Regex(format).Replace(fullString, replaceWith);
         }
 
-        /// <summary>
-        /// Not supported by net47
-        /// </summary>
-        /// <example>
-        /// bool isWindows = OSPlatform.Windows.Running();
-        /// </example>
-        //public static bool Running(this OSPlatform val)
-        //{
-        //    if (RuntimeInformation.IsOSPlatform(val))
-        //        return true;
-        //    else
-        //        return false;
-        //}
+        public static string Name(this FileTypes val)
+        {
+            return Enum.GetName(typeof(FileTypes), val);
+        }
+        public static int Value(this FileTypes val)
+        {
+            return (int)val;
+        }
     }
 
     public enum FileTypes
@@ -82,7 +77,8 @@ namespace Chizl.TextConverter
 
     public enum AuditTypes
     {
-        File = 0,
+        Initialize = 0,
+        File,
         Directory,
         Row,
         Column,

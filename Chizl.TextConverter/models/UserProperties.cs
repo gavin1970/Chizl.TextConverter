@@ -5,6 +5,7 @@ namespace Chizl.TextConverter
 {
     public abstract class UserProperties
     {
+        private List<ColumnDefinition> _columnDefinitions = new List<ColumnDefinition>();
         /// <summary>
         /// Validation Logs is an audit log with all successful and failed messages.
         /// </summary>
@@ -30,16 +31,37 @@ namespace Chizl.TextConverter
         /// </summary>
         public DataTable AsDataTable { get; internal set; }
         /// <summary>
-        /// Each Column Definition and all their properties.
+        /// Default: new List<ColumnDefinition>()</br>
+        /// Each Column Definition and all their properties.<br/>
+        /// null will be treated as ColumnDefinitions.Clear().
         /// </summary>
-        public List<ColumnDefinition> ColumnDefinitions { get; set; } = new List<ColumnDefinition>();
+        public List<ColumnDefinition> ColumnDefinitions
+        { 
+            get { return _columnDefinitions; } 
+            set { _columnDefinitions = value ?? (_columnDefinitions = new List<ColumnDefinition>()); } 
+        }
         /// <summary>
         /// Default: false<br/>
+        /// --------------------------<br/>
         /// Set to true to trim on Load or set to true if trim on Save.<br/>
         /// Trim for Load and Save are 2 completely separate settings.<br/>
         /// Be sure to set for each unless the data you pulled was trimmed<br/>
         /// and that is what is being passed to Save.
         /// </summary>
         public bool TrimValues { get; set; } = false;
+        /// <summary>
+        /// Default: false</br>
+        /// --------------------------<br/>
+        /// When loading a file or saving to file, the first row will be the column names.
+        /// </summary>
+        public bool FirstRowIsHeader { get; set; } = false;
+        /// <summary>
+        /// Default: false<br/>
+        /// Use by SaveFile class only, setting this to true will ignore the order<br/>
+        /// of the DataTable and only create a file based on columns set in ColumnDefinitions.</br>
+        /// When set to false, the file will be saved based on the DataTable, but will use any</br>
+        /// ColumnDefinitions set.  And all columns are not required to have a ColumnDefinition.
+        /// </summary>
+        public bool FileByColDefOnly { get; internal set; } = false;
     }
 }

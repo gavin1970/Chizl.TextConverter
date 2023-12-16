@@ -28,7 +28,7 @@ namespace Chizl.TextConverter
         /// String max length of string or Fixed length size of field.
         /// </param>
         /// <param name="decimals">If double or float, what is floating value.</param>
-        public ColumnDefinition(string name, DataTypes dataType, int size = 0, int decimalSize = 0)
+        public ColumnDefinition(string name, DataTypes dataType, int size = 0, int decimalSize = -1)
         {
             Name = name;
             Size = size;
@@ -63,9 +63,10 @@ namespace Chizl.TextConverter
         /// </summary>
         public DataTypes DataType { get; } = DataTypes.String;
         /// <summary>
+        /// Default: -1 = No Rounding, leave as is.<br/>
         /// Floating point value for Double or Float DataTypes
         /// </summary>
-        public int DecimalSize { get; } = int.MinValue;
+        public int DecimalSize { get; } = -1;
         /// <summary>
         /// If only specific values are allowed, they can be added here.
         /// </summary>
