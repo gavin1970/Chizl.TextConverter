@@ -1,5 +1,5 @@
 ﻿# Chizl.TextConverter
-Load text files into DataTables and will eventually be able to write to different file types.
+Load text files into DataTables and has the ability to write to a different file type.
 
 ## Current Supported File Types
 - Fixed Length Columns
@@ -19,9 +19,6 @@ Load text files into DataTables and will eventually be able to write to differen
 - TimeSpan
 
 A .NET6 Core console Demo included.
-
-## Future
-- Add save DataTable to csv, json, tab-delimited, semicolon-delimited, and more to come....
 
 ## Written in
 - Visual Studio 2022 Professional on Win11
