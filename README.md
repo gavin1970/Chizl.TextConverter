@@ -97,8 +97,9 @@ A .NET6 Core console Demo included.
 **Q:** Why are there only Int64 and not Int16 or Int32?<br/>
 **A:** Since this is a conversion tool, it's all temporary storage. Int64 being the largest it covers all Ints or Longs. This was done for String instead of Char, Decimal instead of Double, etc. You can set length and floating-point length as part of **ColumnDefinition**.<br/>
 
-**Q:** Until this library has a way to save to disc in a different format, how can I use this now?<br/>
-**A:** The [Demo](https://github.com/gavin1970/Chizl.TextConverter/blob/master/Demo/Program.cs#L142) has a method named, **DisplayTable**. It dumps all columns and data to the console window. This can be changed to save to a file since all rows and columns are already separated and validated in the DataTable. It also shows what needs special conversions (Byte[] and DBNull data). Something to Note DBNull data only comes from column set to AllowDBNull being set, no matter what DataType the column is.<br/>
+**Q:** If I just want to dump the information to the screen, what is the best way to format it?<br/>
+**A:** The [Demo](https://github.com/gavin1970/Chizl.TextConverter/blob/master/Demo/Program.cs) has a method named, **DisplayTable()**. It dumps all columns and data to the console window. In this demo it also writes the converted data to file.  Since all rows and columns are separated and validated in the DataTable this demo will show what special conversions (Byte[] and DBNull data) are handled.<br/>
+**NOTE:**  DBNull data comes from column where AllowDBNull is set, no matter what DataType the column is.<br/>
 
 **Example:**<br/>
 ```csharp
