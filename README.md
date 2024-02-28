@@ -30,6 +30,7 @@ A .NET6 Core console Demo included.
 - net48
 - net6.0
 - net7.0
+- net8.0
  
 ## Dependencies
 - None
