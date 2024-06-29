@@ -14,7 +14,10 @@ namespace Chizl.TextConverter
         /// <summary>
         /// Only the property Empty can call this Constructor.
         /// </summary>
-        private ColumnDefinition() {}
+        private ColumnDefinition() 
+        {
+            this.IsEmpty = true;
+        }
 
         /// <summary>
         /// Setup a column's definition.<br/>
@@ -30,11 +33,10 @@ namespace Chizl.TextConverter
         /// <param name="decimals">If double or float, what is floating value.</param>
         public ColumnDefinition(string name, DataTypes dataType, int size = 0, int decimalSize = -1)
         {
-            Name = name;
-            Size = size;
-            DataType = dataType;
-            DecimalSize = decimalSize;
-            IsEmpty = false;
+            this.Name = name;
+            this.Size = size;
+            this.DataType = dataType;
+            this.DecimalSize = decimalSize;
         }
         #endregion
 
@@ -42,7 +44,7 @@ namespace Chizl.TextConverter
         /// <summary>
         /// Return if this is a empty class or not.
         /// </summary>
-        public bool IsEmpty { get; } = true;
+        public bool IsEmpty { get; } = false;
         /// <summary>
         /// Create an empty class to pass in, when not required, but can't be null.
         /// </summary>

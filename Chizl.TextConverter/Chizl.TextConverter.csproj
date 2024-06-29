@@ -12,9 +12,9 @@
 				<Nullable>disable</Nullable>
 				<Copyright>© 2023 chizl.com</Copyright>
 				<PackageTags>ascii;csv;fixed length columns;tab-delimited;semicolon-delimited</PackageTags>
-				<AssemblyVersion>4.2.0.0</AssemblyVersion>
-				<Version>4.2.27.0</Version>
-				<FileVersion>4.2.27.0029</FileVersion>
+				<AssemblyVersion>4.6.0.0</AssemblyVersion>
+				<Version>4.6.29.0</Version>
+				<FileVersion>4.6.29.0354</FileVersion>
 				<EnforceCodeStyleInBuild>False</EnforceCodeStyleInBuild>
 				<PackageReadmeFile>README.md</PackageReadmeFile>
 		</PropertyGroup>
