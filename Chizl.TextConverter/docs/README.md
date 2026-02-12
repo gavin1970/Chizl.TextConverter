@@ -26,17 +26,14 @@ A .NET6 Core console Demo included.
 ## Supports
 - netstandard2.0
 - netstandard2.1
-- net47
 - net48
-- net6.0
-- net7.0
 - net8.0
  
 ## Dependencies
 - None
 
 ## Example with CSV
- ```csharp
+ ```C#
     LoadFile loadFile = new(".\\myfile.csv", FileTypes.Comma_Delimited);
     loadFile.ColumnDefinitions = new()
     {
@@ -65,7 +62,7 @@ A .NET6 Core console Demo included.
 ```
 
 ## Example with Fixed Length Columns
-```csharp
+```C#
     LoadFile loadFile = new(".\\myfile_FixedLengthColumns.txt", FileTypes.Fixed_Length_Columns);
     loadFile.ColumnDefinitions = new()
     {
