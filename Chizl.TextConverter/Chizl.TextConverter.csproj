@@ -15,11 +15,11 @@
 				<PackageTags>netstandard;net8.0;ascii;csv;fixed length columns;tab-delimited;semicolon-delimited</PackageTags>
 				<AssemblyVersion>6.0.0.0</AssemblyVersion>
 				<!-- Path +1 for each deploy to Nuget. -->
-				<Version>6.2.13.1</Version>
+				<Version>6.2.13.2</Version>
 				<!-- [Year-2020].Month.Day.HHmm (UTC). -->
-				<FileVersion>6.2.13.1852</FileVersion>
+				<FileVersion>6.2.13.2032</FileVersion>
 				<!-- Uses by audit and system monitors. -->
-				<InformationalVersion>6.2.13.1852</InformationalVersion>
+				<InformationalVersion>6.2.13.2032</InformationalVersion>
 
 				<!-- NuGet Package Metadata -->
 				<PackageReadmeFile>README.md</PackageReadmeFile>
