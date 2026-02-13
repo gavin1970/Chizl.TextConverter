@@ -31,7 +31,7 @@
 
 		<ItemGroup>
 				<None Include="..\.editorconfig" Link=".editorconfig" />
-				<None Include="docs\README.md" Pack="true" PackagePath="\" />
+				<None Include="..\README.md" Pack="true" PackagePath="\" />
 				<None Include="ChizlTextConverter.png" Pack="true" PackagePath="\" />
 		</ItemGroup>
 </Project>
