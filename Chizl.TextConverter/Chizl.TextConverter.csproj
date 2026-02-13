@@ -2,24 +2,36 @@
 
 		<PropertyGroup>
 				<TargetFrameworks>netstandard2.0;netstandard2.1;net48;net8.0</TargetFrameworks>
+				<ImplicitUsings>disable</ImplicitUsings>
+				<Nullable>disable</Nullable>
+				<EnforceCodeStyleInBuild>False</EnforceCodeStyleInBuild>
 		</PropertyGroup>
 
 		<PropertyGroup>
 				<Authors>Chizl</Authors>
 				<PackageId>Chizl.TextConverter</PackageId>
 				<Company>Chizl.com</Company>
-				<ImplicitUsings>disable</ImplicitUsings>
-				<Nullable>disable</Nullable>
-				<Copyright>© 2023 chizl.com</Copyright>
-				<PackageTags>ascii;csv;fixed length columns;tab-delimited;semicolon-delimited</PackageTags>
-				<AssemblyVersion>4.6.0.0</AssemblyVersion>
-				<Version>4.6.29.0</Version>
-				<FileVersion>4.6.29.0354</FileVersion>
-				<EnforceCodeStyleInBuild>False</EnforceCodeStyleInBuild>
+				<Copyright>© 2023-2026 chizl.com</Copyright>
+				<PackageTags>netstandard;net8.0;ascii;csv;fixed length columns;tab-delimited;semicolon-delimited</PackageTags>
+				<AssemblyVersion>6.0.0.0</AssemblyVersion>
+				<Version>6.2.13.0</Version>
+				<FileVersion>6.2.13.0406</FileVersion>
+
+				<!-- NuGet Package Metadata -->
 				<PackageReadmeFile>README.md</PackageReadmeFile>
+				<Description>A robust .NET library for loading, validating, and converting text-based data files into strongly-typed DataTable objects, then modify and save them as different text-base data files. Supports CSV, Fixed Length, Tab-Delimited, and more.</Description>
+				<PackageProjectUrl>https://github.com/gavin1970/Chizl.TextConverter</PackageProjectUrl>
+				<RepositoryUrl>https://github.com/gavin1970/Chizl.TextConverter</RepositoryUrl>
+				<RepositoryType>git</RepositoryType>
+				<PackageLicenseExpression>MIT</PackageLicenseExpression>
+				<PackageIcon>ChizlTextConverter.png</PackageIcon>
+				<PackageReleaseNotes>See https://github.com/gavin1970/Chizl.TextConverter/releases</PackageReleaseNotes>
+				<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 		</PropertyGroup>
 
 		<ItemGroup>
-		  <None Include="..\.editorconfig" Link=".editorconfig" />
+				<None Include="..\.editorconfig" Link=".editorconfig" />
+				<None Include="docs\README.md" Pack="true" PackagePath="\" />
+				<None Include="ChizlTextConverter.png" Pack="true" PackagePath="\" />
 		</ItemGroup>
 </Project>
