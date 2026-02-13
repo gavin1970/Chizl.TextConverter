@@ -308,7 +308,7 @@ Contributions are welcome! Please:
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE.md](https://github.com/gavin1970/Chizl.TextConverter/blob/master/Chizl.TextConverter/docs/README.md) file for details.
+This project is licensed under the MIT License - see the [LICENSE.md](https://github.com/gavin1970/Chizl.TextConverter/blob/master/Chizl.TextConverter/docs/LICENSE.md) file for details.
 
 ---
 
