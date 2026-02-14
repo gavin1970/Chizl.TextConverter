@@ -1,7 +1,6 @@
 ﻿# Chizl.TextConverter
-<img src="https://github.com/gavin1970/Chizl.TextConverter/blob/master/Chizl.TextConverter/ChizlTextConverter.png?raw=true" alt="ChizlTextConverter Logo" width="128" /><br/>
 
-[![NuGet](https://img.shields.io/badge/nuget-v4.6.29.0-blue)](https://www.nuget.org/packages/Chizl.TextConverter)
+[![NuGet](https://img.shields.io/badge/nuget-v6.2.13.1-blue)](https://www.nuget.org/packages/Chizl.TextConverter)
 [![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/gavin1970/Chizl.TextConverter/blob/master/LICENSE.md)
 [![.NET](https://img.shields.io/badge/.NET-Standard%202.0%20%7C%202.1%20%7C%20Framework%204.8%20%7C%20.NET%208-purple)](https://dotnet.microsoft.com/)
 
@@ -33,7 +32,7 @@ dotnet add package Chizl.TextConverter
 
 ### Package Reference
 
-<PackageReference Include="Chizl.TextConverter" Version="4.6.29.0" />
+<PackageReference Include="Chizl.TextConverter" Version="6.2.13.1" />
 
 ---
 
@@ -323,7 +322,7 @@ This project is licensed under the MIT License - see the [LICENSE.md](https://gi
 
 ## 📝 Changelog
 
-### v4.6.29.0
+### v6.2.13.1
 - Current stable release
 - Multi-target framework support
 - Comprehensive audit logging
