@@ -1,6 +1,6 @@
 ﻿# Chizl.TextConverter
 
-[![NuGet](https://img.shields.io/badge/nuget-v6.2.13.1-blue)](https://www.nuget.org/packages/Chizl.TextConverter)
+[![NuGet Version](https://img.shields.io/nuget/v/Chizl.TextConverter)](https://www.nuget.org/packages/Chizl.TextConverter)
 [![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/gavin1970/Chizl.TextConverter/blob/master/LICENSE.md)
 [![.NET](https://img.shields.io/badge/.NET-Standard%202.0%20%7C%202.1%20%7C%20Framework%204.8%20%7C%20.NET%208-purple)](https://dotnet.microsoft.com/)
 
@@ -32,7 +32,8 @@ dotnet add package Chizl.TextConverter
 
 ### Package Reference
 
-<PackageReference Include="Chizl.TextConverter" Version="6.2.13.1" />
+&lt;PackageReference Include="Chizl.TextConverter" /&gt;
+> **Note:** Omitting the version attribute automatically uses the latest stable release. To pin a specific version, use `Version="x.x.x"`.
 
 ---
 
