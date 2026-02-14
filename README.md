@@ -323,12 +323,23 @@ This project is licensed under the MIT License - see the [LICENSE.md](https://gi
 
 ## 📝 Changelog
 
-### v6.2.13.1
-- Current stable release
+### ![Latest Version](https://img.shields.io/nuget/v/Chizl.TextConverter)
+- Updated version to because of update into nuget.
+- Updated README.md and moved from docs folder to root for Github.  
+	- Visual Studio isn't showing the README.md in NuGet Solution window, but shows it under Package Details. 
+	- `Still Doesn't show in NuGet Solution window, but at least shows in Package Details.`
+
+### ![v6.2.13.1](https://img.shields.io/badge/nuget-v6.2.13.1-blue)
+- Updated version to reflect new dates and reset assembly version to 6.0.0.0.
+- Updated README.md
+
+### ![v4.6.29](https://img.shields.io/badge/nuget-v4.6.29-blue)
+- Original Upload (2024-06-29)
+- Stable release
 - Multi-target framework support
 - Comprehensive audit logging
 - Full format conversion capabilities
 
 ---
 
-**Made with ❤️ by Chizl** | © 2023 chizl.com
+**Made with ❤️ by Chizl** | © 2026 chizl.com
