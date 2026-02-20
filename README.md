@@ -1,8 +1,10 @@
 ﻿# Chizl.TextConverter
 
-[![NuGet Version](https://img.shields.io/nuget/v/Chizl.TextConverter)](https://www.nuget.org/packages/Chizl.TextConverter)
-[![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/gavin1970/Chizl.TextConverter/blob/master/LICENSE.md)
-[![.NET](https://img.shields.io/badge/.NET-Standard%202.0%20%7C%202.1%20%7C%20Framework%204.8%20%7C%20.NET%208-purple)](https://dotnet.microsoft.com/)
+[![NuGet Version](https://img.shields.io/nuget/v/Chizl.TextConverter.svg)](https://www.nuget.org/packages/Chizl.TextConverter/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-orange.svg)](https://github.com/gavin1970/Chizl.TextConverter/blob/master/LICENSE.md)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/Chizl.TextConverter)](https://www.nuget.org/packages/Chizl.TextConverter/)<br/>
+[![Target Frameworks](https://img.shields.io/badge/target%20frameworks-netstandard2.0%20%7C%20netstandard2.1-purple)](https://dotnet.microsoft.com/)
+
 
 A robust, high-performance .NET library for loading, validating, and converting text-based data files into strongly-typed `DataTable` objects. Seamlessly transform between multiple file formats with built-in validation, column-level type conversion, and comprehensive audit logging.
 
